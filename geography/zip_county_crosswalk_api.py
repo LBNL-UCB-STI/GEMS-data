@@ -23,4 +23,4 @@ if response.status_code != 200:
 else: 
 	df = pd.DataFrame(response.json()["data"]["results"])	
 	print(df);
-df.to_csv('/Users/xiaodanxu/Library/CloudStorage/GoogleDrive-arielinseu@gmail.com/My Drive/GEMS/demand generation/Data/Clean/ZIP_COUNTY_LOOKUP_2023.csv')
+df.to_csv('C:/FHWA_R2/spatial_boundary/CleanData/ZIP_COUNTY_LOOKUP_2023.csv')
