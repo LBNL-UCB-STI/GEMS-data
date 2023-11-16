@@ -1,4 +1,5 @@
 # Census tract shapefile compile
+# updated on 11/16/23 by Xiaodan Xu, create micro-geotype boundary based on 2020 census boundary
 ######################################################################
 # LJ add: directories so that the files are saved in the right places
 mywd <- "C:/FHWA_R2/spatial_boundary"
@@ -12,10 +13,10 @@ require(RCurl)
 library(purrr) # LJ add: to use reduce
 require(parallel)
 # LJ add: if taRifx.geo not installed, install it once
-if ( "taRifx.geo" %in% rownames(installed.packages()) == FALSE) {
- install.packages("remotes")
-  remotes::install_github("gsk3/taRifx.geo")
-}
+# if ( "taRifx.geo" %in% rownames(installed.packages()) == FALSE) {
+#  install.packages("remotes")
+#   remotes::install_github("gsk3/taRifx.geo")
+# }
 
 
 #require(taRifx.geo) 
@@ -33,6 +34,7 @@ library(maptools)
 library(maps)
 library(tigris)
 library(broom) # to use tidy
+library(stringr)
 
 #setwd("~/Box/FHWA/Data/RawData/")
 
@@ -83,6 +85,10 @@ combined_counties <- rbind_tigris(
 file_name_ct = paste0('combined_county_', year_selected, '.geojson')
 st_write(obj=combined_counties, dsn=file.path(cleandir, file_name_ct))
 
+#XXu add
+cbsa <- core_based_statistical_areas(cb=FALSE,resolution="500k",year=year_selected)
+file_name_cbsa = paste0('combined_cbsa_', year_selected, '.geojson')
+st_write(obj=file_name_cbsa, dsn=file.path(cleandir, file_name_cbsa))
 # census tract 2020 - 2010 crosswalk
 # link: https://www2.census.gov/geo/docs/maps-data/data/rel2020/tract/tab20_tract20_tract10_natl.txt
 census_tract_crosswalk <- read.table(file.path(datadir, 
@@ -90,6 +96,41 @@ census_tract_crosswalk <- read.table(file.path(datadir,
                                      header = TRUE, sep = "|")
 write.csv(census_tract_crosswalk, file.path(cleandir, 'census_tract_crosswalk_2010_2020.csv'))
 
+# generate GEOTYPE id and shapefile
+tract_county_cbsa_crosswalk <- read.csv(file.path(cleandir, 'cleaned_lodes8_crosswalk.csv'))
+tract_county_cbsa_crosswalk <- tract_county_cbsa_crosswalk %>% 
+  mutate(spatial_id = ifelse(cbsa == 99999, cty, cbsa))
+
+write.csv(tract_county_cbsa_crosswalk, file.path(cleandir, 'cleaned_lodes8_crosswalk_with_ID.csv'))
+
+# process county
+crosswalk_county_part <- tract_county_cbsa_crosswalk %>%
+  filter(cbsa == 99999)
+crosswalk_county_part <- crosswalk_county_part %>% mutate(is_cbsa = 0)
+crosswalk_county_part <- crosswalk_county_part %>% select(spatial_id, is_cbsa) %>% distinct()
+crosswalk_county_part <- crosswalk_county_part %>% mutate(spatial_id = str_pad(spatial_id, 5, pad = "0"))
+# append county geometry
+crosswalk_county_part <- merge(crosswalk_county_part, combined_counties,
+                               by.x = 'spatial_id', by.y = 'GEOID', all.x = TRUE, all.y=FALSE) 
+crosswalk_county_part <- crosswalk_county_part %>% select(spatial_id, is_cbsa, ALAND, AWATER, geometry)  
+
+# process cbsa 
+crosswalk_cbsa_part <- tract_county_cbsa_crosswalk %>% 
+  filter(cbsa != 99999)
+crosswalk_cbsa_part <- crosswalk_cbsa_part %>% mutate(is_cbsa = 1)
+crosswalk_cbsa_part <- crosswalk_cbsa_part %>% select(spatial_id, is_cbsa) %>% distinct()
+crosswalk_cbsa_part <- crosswalk_cbsa_part %>% mutate(spatial_id = str_pad(spatial_id, 5, pad = "0"))
+# append county geometry
+crosswalk_cbsa_part <- merge(crosswalk_cbsa_part, cbsa,
+                               by.x = 'spatial_id', by.y = 'GEOID', all.x = TRUE, all.y=FALSE) 
+crosswalk_cbsa_part <- crosswalk_cbsa_part %>% select(spatial_id, is_cbsa, ALAND, AWATER, geometry)  
+
+# combine county and cbsa
+combined_geotype_spatial_map <- rbind(crosswalk_county_part, crosswalk_cbsa_part)
+combined_geotype_spatial_map <- st_as_sf(combined_geotype_spatial_map)
+
+file_name_geotype = paste0('combined_geotype_unit_', year_selected, '.geojson')
+st_write(obj=combined_geotype_spatial_map, dsn=file.path(cleandir, file_name_geotype))
 # exporting combined shape file. LJ add path to save the data
 #writeOGR(obj=combined_counties, dsn=file.path(cleandir,"Counties"), layer="combined_counties", driver="ESRI Shapefile")
 
