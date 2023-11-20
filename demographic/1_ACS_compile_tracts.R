@@ -1,6 +1,6 @@
 # Generating dataset for geotypes 
 # FHWA project 
-# Last Updated: 2019-01-11
+# Last Updated: 11-20-2023 by Xiaodan Xu, update package, replace variables for vehicle and race, drop housing variables
 
 ######################################################################
 setwd("/Users/xiaodanxu/Library/CloudStorage/GoogleDrive-arielinseu@gmail.com/My Drive/GEMS/data")

@@ -3,91 +3,141 @@
 # We use only Workplace Area Characteristics and OD pairs
 # https://lehd.ces.census.gov/data/
 # exports tract-level data as .csv for clustering analysis
-
+# Set working directory
+mywd <- "/Users/xiaodanxu/Library/CloudStorage/GoogleDrive-arielinseu@gmail.com/My Drive/GEMS/data"
+setwd(mywd)
 library(lehdr) # to download LEHD data from FTP
 library(tidycensus) # to list state FIPS codes
 library(data.table)
 library(dplyr)
 
-# Set working directory
-mywd <- 'C:/FHWA/For FHWA folks/opportunity_and_mode_availability'
-setwd(mywd)
+
 
 datadir <- "RawData"
 cleandir <- "CleanData"
-
+analysis_year <- 2021
 ###############
 # DOWNLOAD LEHD DATA 
 # NOTE: downloaded data are raw data. best to use imported data for analysis
 #####################
 us1 <- unique(fips_codes$state)[1:56]
-# Workplace area characteristics (AK and SD missing from 2017)
-us <- us1[!us1 %in%  c("AS", "GU", "MP", "PR", "UM", "AK", "SD")]
+# Workplace area characteristics (latest data from AK is 2016, and 2018 for AR and MS)
+us <- us1[!us1 %in%  c("AS", "GU", "MP", "PR", "UM", "AK", "AR", "MS")]
 
-wac <- grab_lodes(us, 2017, lodes_type = "wac",
-           job_type = "JT00", #all jobs combined
-           segment = "S000", agg_geo = "tract",
-           download_dir = file.path(getwd(), "WAC"))
+# 2021 data for most us states
+wac <- grab_lodes(us, 
+                  analysis_year,
+                  version = 'LODES8',
+                  lodes_type = "wac",
+                  job_type = "JT00", #all jobs combined
+                  segment = "S000", # select total jobs
+                  agg_geo = "tract")
 head(wac)
-wac_us = wac
-# get 2015 data for AK and SD
-wac_aksd <- grab_lodes(c("AK", "SD"), 2015, lodes_type = "wac",
-           job_type = "JT00", #all jobs combined
-           segment = "S000", agg_geo = "tract", 
-           download_dir = file.path(getwd(), "WAC"))
-head(wac_aksd)
 
-#append AK and SD to USA. LJ add: wac_us should be wac
-wac <- rbind(wac, wac_aksd) %>% 
-  select(w_tract, C000, CNS01, CNS02, CNS05) %>%
-  distinct()
+# get 2016 data for AK
+wac_ak <- grab_lodes('AK', 
+                     2016,
+                     version = 'LODES8',
+                     lodes_type = "wac",
+                     job_type = "JT00", #all jobs combined
+                     segment = "S000", # select total jobs
+                     agg_geo = "tract")
 
-colnames(wac) <- c("trct", "jobs_total", "jobs_ag", "jobs_manuf", "jobs_mining")
+# get 2018 data for AK and MS
+wac_ar_ms <- grab_lodes(c("AR", "MS"),
+                     2018,
+                     version = 'LODES8',
+                     lodes_type = "wac",
+                     job_type = "JT00", #all jobs combined
+                     segment = "S000", # select total jobs
+                     agg_geo = "tract")
+
+
+#append AK, MS and AR to USA. LJ add: wac_us should be wac
+wac_US <- rbind(wac, wac_ak, wac_ar_ms) %>% 
+  select(year, state, w_tract, C000, CNS01, CNS02, CNS03, CNS04, CNS05, CNS06, CNS07, CNS08, CNS09, CNS10,
+         CNS11, CNS12, CNS13, CNS14, CNS15, CNS16, CNS17, CNS18) 
+
+colnames(wac_US) <- c('year', 'state','w_tract', 'total_jobs', "naics_11", "naics_21", "naics_22", "naics_23",
+                      "naics_3133", "naics_42", "naics_4445", "naics_4849", "naics_51", "naics_52", "naics_53",
+                      "naics_54", "naics_56", "naics_61", "naics_62", "naics_71", "naics_72")
 
 #Export workplace area characteristics for each census tract
-fwrite(wac, file = file.path(cleandir, "wac_tract_2017.csv"), row.names = FALSE)
+fwrite(wac_US, file = file.path(cleandir, paste0("wac_tract_", analysis_year, ".csv")), row.names = FALSE)
 
 ##################
 # Origin-destination pairs (missing AK and SD for 2017)
 #########################
-ods.main <- grab_lodes(us, 2017, lodes_type = "od",
-           job_type = "JT00", #all jobs combined
-           agg_geo = "tract", state_part = c("main"), #within state commutes
-           segment = "S000", #only need the overall trips, not segmented
-           download_dir = file.path(getwd(), "OD"))
+ods.main <-grab_lodes(us, 
+                 analysis_year,
+                 version = 'LODES8',
+                 lodes_type = "od",
+                 job_type = "JT00", #all jobs combined
+                 segment = "S000", # select total jobs
+                 state_part = "main",
+                 agg_geo = "tract") %>%
+  select(year, state, w_tract, h_tract, S000)
 head(ods.main)
 
-ods.aux <- grab_lodes(us, 2017, lodes_type = "od",
-           job_type = "JT00", #all jobs combined
-           agg_geo = "tract", state_part = c("aux"), #out-of-state commutes
-           segment = "S000", #only need the overall trips, not segmented
-           download_dir = file.path(getwd(), "OD"))
+ods.aux <- grab_lodes(us, 
+                      analysis_year,
+                      version = 'LODES8',
+                      lodes_type = "od",
+                      job_type = "JT00", #all jobs combined
+                      segment = "S000", # select total jobs
+                      state_part = "aux",
+                      agg_geo = "tract")%>%
+  select(year, state, w_tract, h_tract, S000)
 
-# Alaska and SD from 2015
-#NOTE 20200204: AK and SD now have 2016 data but use 2015 for now since AWS routes were generated with those
-ods1  <- grab_lodes(c("AK", "SD"), 2015, lodes_type = "od",
-           job_type = "JT00", #all jobs combined
-           agg_geo = "tract", state_part = c("aux"), #out-of-state commutes
-           segment = "S000", #only need the overall trips, not segmented
-           download_dir = file.path(getwd(), "OD"))
 
-ods2 <- grab_lodes(c("AK", "SD"), 2015, lodes_type = "od",
-           job_type = "JT00", #all jobs combined
-           agg_geo = "tract", state_part = c("main"), #in-state commutes
-           segment = "S000", #only need the overall trips, not segmented
-           download_dir = file.path(getwd(), "OD"))
+# Alaska from 2016
 
-ak <- grab_lodes(c("AK"), 2015, lodes_type = "od",
-                          job_type = "JT00", #all jobs combined
-                          agg_geo = "tract", state_part = c("main"), #out-of-state commutes
-                          segment = "S000", #only need the overall trips, not segmented
-                          download_dir = file.path(getwd(), "OD"))
+ods_ak.main  <- grab_lodes('AK', 
+                           2016,
+                           version = 'LODES8',
+                           lodes_type = "od",
+                           job_type = "JT00", #all jobs combined
+                           segment = "S000", # select total jobs
+                           state_part = "main",
+                           agg_geo = "tract") %>%
+  select(year, state, w_tract, h_tract, S000)
 
-ods <- rbind(ods.main, ods.aux, ods1, ods2) %>% 
+ods_ak.aux  <- grab_lodes('AK', 
+                           2016,
+                           version = 'LODES8',
+                           lodes_type = "od",
+                           job_type = "JT00", #all jobs combined
+                           segment = "S000", # select total jobs
+                           state_part = "aux",
+                           agg_geo = "tract") %>%
+  select(year, state, w_tract, h_tract, S000)
+
+# get 2018 data for AK and MS
+ods_ar_ms.main  <- grab_lodes(c('AR', 'MS'), 
+                                  2018,
+                                  version = 'LODES8',
+                                  lodes_type = "od",
+                                  job_type = "JT00", #all jobs combined
+                                  segment = "S000", # select total jobs
+                                  state_part = "main",
+                                  agg_geo = "tract") %>%
+  select(year, state, w_tract, h_tract, S000)
+
+ods_ar_ms.aux  <- grab_lodes(c('AR', 'MS'), 
+                                2018,
+                                version = 'LODES8',
+                                lodes_type = "od",
+                                job_type = "JT00", #all jobs combined
+                                segment = "S000", # select total jobs
+                                state_part = "aux",
+                                agg_geo = "tract") %>%
+  select(year, state, w_tract, h_tract, S000)
+
+ods <- rbind(ods.main, ods.aux, ods_ak.main, ods_ak.aux, ods_ar_ms.main, ods_ar_ms.aux) %>% 
   select(w_tract, h_tract, S000)
 
 # Export OD pairs
-fwrite(ods, file.path(cleandir, "od_pairs_tract_2017.csv"),  row.names = FALSE)
+fwrite(ods, file.path(cleandir, paste0("od_pairs_tract_", analysis_year, ".csv")),  row.names = FALSE)
 
 # check number of trips accounted for:
 #total <- colSums(ods[3]) 
@@ -95,31 +145,31 @@ fwrite(ods, file.path(cleandir, "od_pairs_tract_2017.csv"),  row.names = FALSE)
 # 3 missing observations
 
 ############################
-# CROSSWALK FOR COUNTY, STATE, AND CBSA
+# CROSSWALK FOR COUNTY, STATE, AND CBSA  --> XXu note: this part has been performed under 0_clean_boundaries.R now
 ################################
 #Note that the CBSAs change periodically and this crosswalk could be updated even without updating the LODES7 commute data
-# LJ add: fixed the path
-xwalk <- fread(file.path(datadir, "LEHD/LODES2017/us_xwalk.csv")) %>%
-  select(st, stusps, stname, cty, ctyname, trct, cbsa, cbsaname) %>%
-  rename(fips_st = st, 
-       st_code = stusps, 
-       state = stname, 
-       tract = trct) %>% 
-  filter(fips_st < 60) %>% # remove all the US territories
-  distinct() # drop all duplicates since df was at block level
 
-fwrite(xwalk, file.path(cleandir, "us_xwalk_tract_2017.csv"),  row.names = FALSE)
-#XIAODAN'S NOTES: this output may very likely be the same as us_xwalk_tract_2017_withID.CSV, probably just got slightly edited by Natalie
-
-# 2015 crosswalk for census tracts that have changed
-xwalk <- fread(file.path(datadir, "LEHD/LODES2015/us_xwalk2015.csv")) %>%
-  select(st, stusps, stname, cty, ctyname, trct, cbsa, cbsaname) %>%
-  rename(fips_st = st,
-         st_code = stusps,
-         state = stname,
-         tract = trct) %>%
-  filter(fips_st < 60) %>% # remove all the US territories
-  distinct() # drop all duplicates since df was at block level
-fwrite(xwalk, file.path(cleandir, "us_xwalk_cbg_2015.csv"),  row.names = FALSE)
+# xwalk <- fread(file.path(datadir, "LEHD/LODES2017/us_xwalk.csv")) %>%
+#   select(st, stusps, stname, cty, ctyname, trct, cbsa, cbsaname) %>%
+#   rename(fips_st = st, 
+#        st_code = stusps, 
+#        state = stname, 
+#        tract = trct) %>% 
+#   filter(fips_st < 60) %>% # remove all the US territories
+#   distinct() # drop all duplicates since df was at block level
+# 
+# fwrite(xwalk, file.path(cleandir, "us_xwalk_tract_2017.csv"),  row.names = FALSE)
+# #XIAODAN'S NOTES: this output may very likely be the same as us_xwalk_tract_2017_withID.CSV, probably just got slightly edited by Natalie
+# 
+# # 2015 crosswalk for census tracts that have changed
+# xwalk <- fread(file.path(datadir, "LEHD/LODES2015/us_xwalk2015.csv")) %>%
+#   select(st, stusps, stname, cty, ctyname, trct, cbsa, cbsaname) %>%
+#   rename(fips_st = st,
+#          st_code = stusps,
+#          state = stname,
+#          tract = trct) %>%
+#   filter(fips_st < 60) %>% # remove all the US territories
+#   distinct() # drop all duplicates since df was at block level
+# fwrite(xwalk, file.path(cleandir, "us_xwalk_cbg_2015.csv"),  row.names = FALSE)
 
 
