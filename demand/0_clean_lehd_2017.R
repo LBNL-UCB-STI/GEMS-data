@@ -4,7 +4,7 @@
 # https://lehd.ces.census.gov/data/
 # exports tract-level data as .csv for clustering analysis
 # Set working directory
-mywd <- "/Users/xiaodanxu/Library/CloudStorage/GoogleDrive-arielinseu@gmail.com/My Drive/GEMS/data"
+mywd <- "C:/FHWA_R2/Demand"
 setwd(mywd)
 library(lehdr) # to download LEHD data from FTP
 library(tidycensus) # to list state FIPS codes
@@ -68,26 +68,33 @@ fwrite(wac_US, file = file.path(cleandir, paste0("wac_tract_", analysis_year, ".
 ##################
 # Origin-destination pairs (missing AK and SD for 2017)
 #########################
-ods.main <-grab_lodes(us, 
-                 analysis_year,
-                 version = 'LODES8',
-                 lodes_type = "od",
-                 job_type = "JT00", #all jobs combined
-                 segment = "S000", # select total jobs
-                 state_part = "main",
-                 agg_geo = "tract") %>%
-  select(year, state, w_tract, h_tract, S000)
-head(ods.main)
+for (st in us){
+  print(st)
+  ods.main <-grab_lodes(st, 
+                        analysis_year,
+                        version = 'LODES8',
+                        lodes_type = "od",
+                        job_type = "JT00", #all jobs combined
+                        segment = "S000", # select total jobs
+                        state_part = "main",
+                        agg_geo = "tract") %>%
+    select(year, state, w_tract, h_tract, S000)
+  head(ods.main)
+  
+  ods.aux <- grab_lodes(st, 
+                        analysis_year,
+                        version = 'LODES8',
+                        lodes_type = "od",
+                        job_type = "JT00", #all jobs combined
+                        segment = "S000", # select total jobs
+                        state_part = "aux",
+                        agg_geo = "tract")%>%
+    select(year, state, w_tract, h_tract, S000) 
+  
+  ods <- rbind(ods.main, ods.aux)
+  fwrite(ods, file.path(cleandir, "OD", paste0("od_pairs_", st, "_", analysis_year, ".csv")),  row.names = FALSE)
+}
 
-ods.aux <- grab_lodes(us, 
-                      analysis_year,
-                      version = 'LODES8',
-                      lodes_type = "od",
-                      job_type = "JT00", #all jobs combined
-                      segment = "S000", # select total jobs
-                      state_part = "aux",
-                      agg_geo = "tract")%>%
-  select(year, state, w_tract, h_tract, S000)
 
 
 # Alaska from 2016
@@ -112,6 +119,8 @@ ods_ak.aux  <- grab_lodes('AK',
                            agg_geo = "tract") %>%
   select(year, state, w_tract, h_tract, S000)
 
+ods_ak <- rbind(ods_ak.main, ods_ak.aux)
+fwrite(ods_ak, file.path(cleandir, "OD", "od_pairs_AK_2016.csv"),  row.names = FALSE)
 # get 2018 data for AK and MS
 ods_ar_ms.main  <- grab_lodes(c('AR', 'MS'), 
                                   2018,
@@ -133,16 +142,8 @@ ods_ar_ms.aux  <- grab_lodes(c('AR', 'MS'),
                                 agg_geo = "tract") %>%
   select(year, state, w_tract, h_tract, S000)
 
-ods <- rbind(ods.main, ods.aux, ods_ak.main, ods_ak.aux, ods_ar_ms.main, ods_ar_ms.aux) %>% 
-  select(w_tract, h_tract, S000)
-
-# Export OD pairs
-fwrite(ods, file.path(cleandir, paste0("od_pairs_tract_", analysis_year, ".csv")),  row.names = FALSE)
-
-# check number of trips accounted for:
-#total <- colSums(ods[3]) 
-# trips = 139730858 
-# 3 missing observations
+ods_ar_ms <- rbind(ods_ar_ms.main,ods_ar_ms.aux)
+fwrite(ods_ar_ms, file.path(cleandir, "OD", "od_pairs_ARMS_2016.csv"),  row.names = FALSE)
 
 ############################
 # CROSSWALK FOR COUNTY, STATE, AND CBSA  --> XXu note: this part has been performed under 0_clean_boundaries.R now

@@ -3,7 +3,7 @@
 # Last Updated: 11-20-2023 by Xiaodan Xu, update package, replace variables for vehicle and race, drop housing variables
 
 ######################################################################
-setwd("/Users/xiaodanxu/Library/CloudStorage/GoogleDrive-arielinseu@gmail.com/My Drive/GEMS/data")
+setwd("C:/FHWA_R2/Demography")
 library(stringr)
 library(reshape2)
 library(dplyr)
@@ -31,7 +31,7 @@ us <- unique(fips_codes$state)[1:51]
 
 # list of variables
 vars <- load_variables(analysis_year, "acs5")
-write.csv(vars, file.path('ACS', paste0('ACS_data_dictionary_', analysis_year, '.csv')))
+write.csv(vars, file.path('CleanData', paste0('ACS_data_dictionary_', analysis_year, '.csv')))
 var_tracts <- vars %>% filter(geography == 'tract')
 # downloading all of the census data
 
@@ -247,7 +247,7 @@ acs <- Reduce(function(x,y) merge(x = x, y = y, by = c("GEOID", "NAME"), na.omit
                         hh_median_income, poverty, vehicles)) # household level
 
 ###########
-# export CSV files to use in stata
+# export CSV files
 ###########
 
 fwrite(acs, file = "CleanData/acs_data_tracts_112023.csv", row.names = F)
