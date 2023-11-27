@@ -6,8 +6,8 @@ Created on Tue Nov 14 10:38:52 2023
 @author: xiaodanxu
 """
 
-from pygris import tracts 
-from pygris import states
+# from pygris import tracts 
+# from pygris import states
 import osmnx
 import pandas as pd
 import geopandas as gpd
@@ -34,29 +34,35 @@ def query_osmnx_stats(geometry, var_to_keep):
 
 def add_df_attr(args):
     df, i, var_to_keep = args
+    out_path = 'Network/RawData/OSMNX/osmnx_stats_by_tract_chunk_' + str(i) + '.csv'
+    if os.path.exists(out_path):
+        return True
     df.loc[:, var_to_keep] = \
         df.apply(lambda row : query_osmnx_stats(row['geometry'], var_to_keep), axis = 1)
     df = df.drop(columns = 'geometry')
-    df.to_csv('osmnx_stats_by_tract_chunk_' + str(i) + '.csv', index = False)
+    df.to_csv(out_path, index = False)
     return(df)
 
 def main():
-    path = '/Users/xiaodanxu/Library/CloudStorage/GoogleDrive-arielinseu@gmail.com/My Drive/GEMS/data/OSMNX'
+    print('run start')
+    path = 'C:/FHWA_R2'
+    analysis_year = 2020
     os.chdir(path)
     start_time = time.time()
-    us_states = states(cb=True, year=2022)
-    state_to_drop = ['AS', 'PR', 'GU', 'VI', 'MP']
-    us_states = us_states.loc[~us_states['STUSPS'].isin(state_to_drop)]
-    list_of_state = us_states['STUSPS'].unique()
-    state_tracts = None
-    for st in list_of_state:
-        state_tracts_sel = tracts(state = st, cb = False, year = 2022, cache = True)
-        state_tracts = pd.concat([state_tracts, state_tracts_sel])
-    print(len(state_tracts))
-    
+    # us_states = states(cb=True, year=2022)
+    # state_to_drop = ['AS', 'PR', 'GU', 'VI', 'MP']
+    # us_states = us_states.loc[~us_states['STUSPS'].isin(state_to_drop)]
+    # list_of_state = us_states['STUSPS'].unique()
+    # state_tracts = None
+    # for st in list_of_state:
+    #     state_tracts_sel = tracts(state = st, cb = False, year = 2022, cache = True)
+    #     state_tracts = pd.concat([state_tracts, state_tracts_sel])
+    # print(len(state_tracts))
+    state_tracts = gpd.read_file('spatial_boundary/CleanData/combined_tracts_' + str(analysis_year) +'.geojson')
+    print('finish map loading')
     # <codecell>
     
-    chunk_size = 10 ** 2
+    chunk_size = 10 ** 3
     njob = 0
     var_to_keep = ['n', 'm', 'k_avg', 'edge_length_total', 'edge_length_avg', 
                    'streets_per_node_avg', 'intersection_count', 'street_length_total', 
@@ -74,8 +80,8 @@ def main():
     print(len(jobs))
     print(jobs[0])
     njob+=len(jobs)
-    pl=Pool(2)
-    pl.map(add_df_attr, jobs[0:1])
+    pl=Pool(8)
+    pl.map(add_df_attr, jobs)
     
     # sample_tracts_test.loc[:, var_to_keep] = \
     #     sample_tracts_test.apply(lambda row : query_osmnx_stats(row['geometry'], var_to_keep), axis = 1)

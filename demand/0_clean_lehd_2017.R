@@ -121,8 +121,9 @@ ods_ak.aux  <- grab_lodes('AK',
 
 ods_ak <- rbind(ods_ak.main, ods_ak.aux)
 fwrite(ods_ak, file.path(cleandir, "OD", "od_pairs_AK_2016.csv"),  row.names = FALSE)
+
 # get 2018 data for AK and MS
-ods_ar_ms.main  <- grab_lodes(c('AR', 'MS'), 
+ods_ar.main  <- grab_lodes(c('AR'), 
                                   2018,
                                   version = 'LODES8',
                                   lodes_type = "od",
@@ -132,7 +133,7 @@ ods_ar_ms.main  <- grab_lodes(c('AR', 'MS'),
                                   agg_geo = "tract") %>%
   select(year, state, w_tract, h_tract, S000)
 
-ods_ar_ms.aux  <- grab_lodes(c('AR', 'MS'), 
+ods_ar.aux  <- grab_lodes(c('AR'), 
                                 2018,
                                 version = 'LODES8',
                                 lodes_type = "od",
@@ -142,8 +143,31 @@ ods_ar_ms.aux  <- grab_lodes(c('AR', 'MS'),
                                 agg_geo = "tract") %>%
   select(year, state, w_tract, h_tract, S000)
 
-ods_ar_ms <- rbind(ods_ar_ms.main,ods_ar_ms.aux)
-fwrite(ods_ar_ms, file.path(cleandir, "OD", "od_pairs_ARMS_2016.csv"),  row.names = FALSE)
+ods_ar <- rbind(ods_ar.main,ods_ar.aux)
+fwrite(ods_ar, file.path(cleandir, "OD", "od_pairs_AR_2018.csv"),  row.names = FALSE)
+
+ods_ms.main  <- grab_lodes(c('MS'), 
+                              2018,
+                              version = 'LODES8',
+                              lodes_type = "od",
+                              job_type = "JT00", #all jobs combined
+                              segment = "S000", # select total jobs
+                              state_part = "main",
+                              agg_geo = "tract") %>%
+  select(year, state, w_tract, h_tract, S000)
+
+ods_ms.aux  <- grab_lodes(c('MS'), 
+                             2018,
+                             version = 'LODES8',
+                             lodes_type = "od",
+                             job_type = "JT00", #all jobs combined
+                             segment = "S000", # select total jobs
+                             state_part = "aux",
+                             agg_geo = "tract") %>%
+  select(year, state, w_tract, h_tract, S000)
+
+ods_ms <- rbind(ods_ms.main,ods_ms.aux)
+fwrite(ods_ms, file.path(cleandir, "OD", "od_pairs_MS_2018.csv"),  row.names = FALSE)
 
 ############################
 # CROSSWALK FOR COUNTY, STATE, AND CBSA  --> XXu note: this part has been performed under 0_clean_boundaries.R now
