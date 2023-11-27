@@ -30,12 +30,13 @@ us_states = states(cb = True, year = analysis_year)
 state_to_drop = ['AS', 'PR', 'GU', 'VI', 'MP']
 us_states = us_states.loc[~us_states['STUSPS'].isin(state_to_drop)]
 od_file_path = 'Demand/CleanData/OD'
+out_file_path = 'Demand/CleanData/OD_distance'
 list_of_od_files = os.listdir(od_file_path)
 
 def get_od_dist(o_lat, o_lon, d_lat, d_lon):
     origin = (o_lat, o_lon)
     dest = (d_lat, d_lon)
-    dist = geopy.distance.geodesic(origin, dest)
+    dist = geopy.distance.geodesic(origin, dest).miles
     return dist
 
 for st in list_of_states:
@@ -57,6 +58,7 @@ for st in list_of_states:
                                on = 'w_tract', how = 'left')
     od_data = pd.merge(od_data, state_tracts_home,
                                on = 'h_tract', how = 'left')
-    od_data.loc[:, 'distance'] = od_data.apply(lambda row : get_od_dist(row['h_lat'], row['h_lon'],
+    od_data.loc[:, 'distance'] = od_data.apply(lambda row : get_od_dist(row['w_lat'], row['w_lon'],
                                   row['h_lat'], row['h_lon']), axis = 1) 
-    break
+    od_data.to_csv(os.path.join(out_file_path, od_file), index = False)
+    # break
