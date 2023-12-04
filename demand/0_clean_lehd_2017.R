@@ -55,12 +55,17 @@ wac_ar_ms <- grab_lodes(c("AR", "MS"),
 
 #append AK, MS and AR to USA. LJ add: wac_us should be wac
 wac_US <- rbind(wac, wac_ak, wac_ar_ms) %>% 
-  select(year, state, w_tract, C000, CNS01, CNS02, CNS03, CNS04, CNS05, CNS06, CNS07, CNS08, CNS09, CNS10,
-         CNS11, CNS12, CNS13, CNS14, CNS15, CNS16, CNS17, CNS18) 
+  select(year, state, w_tract, C000, CNS01, 
+         CNS02, CNS03, CNS04, CNS05, CNS06, 
+         CNS07, CNS08, CNS09, CNS10, CNS11, 
+         CNS12, CNS13, CNS14, CNS15, CNS16, 
+         CNS17, CNS18, CNS19, CNS20) 
 
-colnames(wac_US) <- c('year', 'state','w_tract', 'total_jobs', "naics_11", "naics_21", "naics_22", "naics_23",
-                      "naics_3133", "naics_42", "naics_4445", "naics_4849", "naics_51", "naics_52", "naics_53",
-                      "naics_54", "naics_56", "naics_61", "naics_62", "naics_71", "naics_72")
+colnames(wac_US) <- c('year', 'state','GEOID', 'total_jobs', "naics_11", 
+                      "naics_21", "naics_22", "naics_23", "naics_3133", "naics_42", 
+                      "naics_4445", "naics_4849", "naics_51", "naics_52", "naics_53",
+                      "naics_54", "naics_55", "naics_56", "naics_61", "naics_62", 
+                      "naics_71", "naics_72", 'naics_81', "naics_92")
 
 #Export workplace area characteristics for each census tract
 fwrite(wac_US, file = file.path(cleandir, paste0("wac_tract_", analysis_year, ".csv")), row.names = FALSE)
