@@ -91,19 +91,99 @@ print(sum(np.isinf(output_demand_attributes.loc[:, 'jobs_per_acre'])))
 
 # <codecell>
 """
-part 1 - diversity based attributes
+part 2 - diversity based attributes
 """
 
-# job housing balance--> use person as there more non-zero values
-output_demand_attributes.loc[:, 'jobs_house_bal'] = \
+### job residence balance--> use person as there are more non-zero values
+output_demand_attributes.loc[:, 'jobs_resident_bal'] = \
     output_demand_attributes.loc[:, 'total_jobs'] / output_demand_attributes.loc[:, 'populationE']
 
-output_demand_attributes.loc[:, 'jobs_house_bal'] = \
-    output_demand_attributes.loc[:, 'jobs_house_bal'].fillna(0)  # NA created if 0/0, replace with 0
+output_demand_attributes.loc[:, 'jobs_resident_bal'] = \
+    output_demand_attributes.loc[:, 'jobs_resident_bal'].fillna(0)  # NA created if 0/0, replace with 0
+    
 # check missing
 print('total missing values in job house balance is: ')
-print(output_demand_attributes.loc[:, 'jobs_house_bal'].isnull().sum())
+print(output_demand_attributes.loc[:, 'jobs_resident_bal'].isnull().sum())
 
 # check infinity
 print('total infinity values in job house balance is: ')
-print(sum(np.isinf(output_demand_attributes.loc[:, 'jobs_house_bal'])))
+print(sum(np.isinf(output_demand_attributes.loc[:, 'jobs_resident_bal'])))
+
+# <codecell>
+### job diversity
+
+# calculate 8-tier employment classification
+employment_location_data.loc[:, 'office_jobs'] = \
+    employment_location_data.loc[:, 'naics_51'] + employment_location_data.loc[:, 'naics_52'] + \
+    employment_location_data.loc[:, 'naics_53'] + employment_location_data.loc[:, 'naics_55']
+
+employment_location_data.loc[:, 'retail_jobs'] = \
+    employment_location_data.loc[:, 'naics_4445']
+
+employment_location_data.loc[:, 'industry_jobs'] = \
+    employment_location_data.loc[:, 'naics_11'] + employment_location_data.loc[:, 'naics_21'] + \
+    employment_location_data.loc[:, 'naics_22'] + employment_location_data.loc[:, 'naics_23'] + \
+    employment_location_data.loc[:, 'naics_3133'] + employment_location_data.loc[:, 'naics_42'] + \
+    employment_location_data.loc[:, 'naics_4849'] 
+    
+employment_location_data.loc[:, 'service_jobs'] = \
+    employment_location_data.loc[:, 'naics_54'] + employment_location_data.loc[:, 'naics_56'] + \
+    employment_location_data.loc[:, 'naics_81']  
+    
+employment_location_data.loc[:, 'recreation_jobs'] = \
+    employment_location_data.loc[:, 'naics_71'] + employment_location_data.loc[:, 'naics_72']
+
+employment_location_data.loc[:, 'education_jobs'] = \
+    employment_location_data.loc[:, 'naics_61']
+    
+employment_location_data.loc[:, 'healthcare_jobs'] = \
+    employment_location_data.loc[:, 'naics_62']
+
+employment_location_data.loc[:, 'government_jobs'] = \
+    employment_location_data.loc[:, 'naics_92']
+
+tier_list = ['office_jobs', 'retail_jobs', 'industry_jobs', 'service_jobs',
+             'recreation_jobs',  'education_jobs', 'healthcare_jobs', 'government_jobs']
+
+employment_location_data.loc[:, 'total_jobs'] = \
+    employment_location_data.loc[:, 'total_jobs'].fillna(0)
+    
+employment_location_data.loc[:, tier_list] = \
+    employment_location_data[tier_list].div(employment_location_data['total_jobs'], axis=0)
+    
+
+# <codecell>
+entropy_list = []
+for tier in tier_list:
+    # print('calculate entropy for ' + tier)
+    e_var = 'e_' + tier
+    entropy_list.append(e_var)
+    employment_location_data.loc[:, e_var] = 0
+    
+    # only calculate entropy for non-zero values
+    non_zero_id = (employment_location_data[tier] > 0)
+    employment_location_data.loc[non_zero_id, e_var] = \
+        -employment_location_data.loc[non_zero_id, tier] * \
+        np.log(employment_location_data.loc[non_zero_id, tier])
+
+# if the tract has 0 employment, it will not have job diversity as outcome -> diversity = N/A
+employment_location_data.loc[:, 'job_diversity'] = np.nan
+
+# if diversity = 0, it means the tract only has 1 industry
+non_zero_zone = (employment_location_data['total_jobs'] > 0)
+employment_location_data.loc[non_zero_zone, 'job_diversity'] = \
+        employment_location_data.loc[non_zero_zone, entropy_list].sum(axis = 1) / \
+        np.log(8) 
+
+employment_diversity = employment_location_data[['GEOID', 'job_diversity']]        
+output_demand_attributes = pd.merge(output_demand_attributes,
+                                    employment_diversity,
+                                    on = 'GEOID', how = 'left')
+
+# check missing
+print('total missing values in job diversity is: ')
+print(output_demand_attributes.loc[:, 'job_diversity'].isnull().sum())
+
+# check infinity
+print('total infinity values in job diversity is: ')
+print(sum(np.isinf(output_demand_attributes.loc[:, 'job_diversity'])))
