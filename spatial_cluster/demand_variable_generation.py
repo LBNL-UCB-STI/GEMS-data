@@ -32,7 +32,8 @@ census_year = '2020'
 boundary_and_area = read_csv('spatial_boundary/CleanData/combined_tracts_' + census_year + '.csv')
 population_data = read_csv('Demography/CleanData/acs_data_tracts_112023.csv')
 employment_location_data = read_csv('Demand/CleanData/wac_tract_2021.csv')
-employment_od_data = listdir('Demand/CleanData/OD_distance')
+path_to_emp_od = 'Demand/CleanData/OD_distance'
+employment_od_data = listdir(path_to_emp_od)
 
 #create output dataframe
 output_demand_attributes = boundary_and_area[['GEOID', 'ALAND', 'pct_water']]
@@ -151,8 +152,6 @@ employment_location_data.loc[:, 'total_jobs'] = \
 employment_location_data.loc[:, tier_list] = \
     employment_location_data[tier_list].div(employment_location_data['total_jobs'], axis=0)
     
-
-# <codecell>
 entropy_list = []
 for tier in tier_list:
     # print('calculate entropy for ' + tier)
@@ -187,3 +186,29 @@ print(output_demand_attributes.loc[:, 'job_diversity'].isnull().sum())
 # check infinity
 print('total infinity values in job diversity is: ')
 print(sum(np.isinf(output_demand_attributes.loc[:, 'job_diversity'])))
+
+
+# <codecell>
+
+### job sink magnitude and trip distance distribution
+
+od_attribute_exist = 0 # if 0, execute the code generation, if 1, load existing output
+od_dist_by_tract = None  # create empty data frame to hold input data
+trip_sink_by_tract = None  # create empty data frame to hold input data
+out_od_attributes = None # create empty data frame to hold generated attributes
+
+dist_bin = [-1, 1.3, 3, 8, 100] # assume work location > 100 mi from home --> remote work and no travel needed
+dist_bin_label = ['trips 0-1.3 miles', 'trips 1.3-3 miles', 'trips 3-8 miles', 'trips >8 miles']
+for data in employment_od_data:
+    od_data = read_csv(os.path.join(path_to_emp_od, data))
+    od_data.loc[:, 'dist_bin'] = \
+        pd.cut(od_data.loc[:, 'distance'], bins = dist_bin,
+       labels = dist_bin_label)
+    od_data_by_dist = pd.pivot_table(od_data, 
+                                       values = 'S000',
+                                       index = 'w_tract', 
+                                       columns = 'dist_bin',
+                                       aggfunc="sum")
+    od_data_by_dist = od_data_by_dist.reset_index()
+    
+    break

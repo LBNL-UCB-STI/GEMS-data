@@ -6,6 +6,7 @@ Created on Mon Nov 27 10:13:55 2023
 """
 
 import pandas as pd
+import numpy as np
 import geopandas as gpd
 import time
 import os
@@ -14,6 +15,7 @@ import geopy.distance
 
 path = 'C:/FHWA_R2'
 analysis_year = 2020
+meter_to_mile = 0.000621371
 os.chdir(path)
 start_time = time.time()
 
@@ -44,21 +46,33 @@ for st in list_of_states:
     print(st_name)
     od_file =  [x for x in list_of_od_files if st_name in x][0]
     # print(od_file)
+    
+    # load and format data
     od_data_no_dist = pd.read_csv(os.path.join(od_file_path, od_file))
     od_data_no_dist.loc[:, 'w_tract'] = \
         od_data_no_dist.loc[:, 'w_tract'].astype(str).str.zfill(11)
     od_data_no_dist.loc[:, 'h_tract'] = \
         od_data_no_dist.loc[:, 'h_tract'].astype(str).str.zfill(11)
-    state_tracts_work = state_tracts[['GEOID', 'INTPTLAT', 'INTPTLON']]
-    state_tracts_work.columns = ['w_tract', 'w_lat', 'w_lon']
+    state_tracts_work = state_tracts[['GEOID', 'INTPTLAT', 'INTPTLON', 'ALAND']]
+    state_tracts_work.columns = ['w_tract', 'w_lat', 'w_lon', 'area_m2']
     
+    # append OD centroids
     state_tracts_home = state_tracts[['GEOID', 'INTPTLAT', 'INTPTLON']]
     state_tracts_home.columns = ['h_tract', 'h_lat', 'h_lon']
     od_data = pd.merge(od_data_no_dist, state_tracts_work,
                                on = 'w_tract', how = 'left')
     od_data = pd.merge(od_data, state_tracts_home,
                                on = 'h_tract', how = 'left')
+    
+    # compute distance
     od_data.loc[:, 'distance'] = od_data.apply(lambda row : get_od_dist(row['w_lat'], row['w_lon'],
                                   row['h_lat'], row['h_lon']), axis = 1) 
+    
+    # Impute distance for ODs within the same tract
+    intrazonal_index = (od_data['w_tract'] == od_data['h_tract'])
+    od_data.loc[intrazonal_index, 'distance'] = meter_to_mile * 1/3 * \
+        np.sqrt(od_data.loc[intrazonal_index, 'area_m2'])
+    
+    # write output
     od_data.to_csv(os.path.join(out_file_path, od_file), index = False)
     # break
