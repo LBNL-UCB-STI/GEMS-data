@@ -66,7 +66,9 @@ file_name = paste0('combined_tracts_', year_selected, '.geojson')
 st_write(obj=tracts, dsn=file.path(cleandir, file_name))
 
 tracts_df <- tracts %>% st_drop_geometry()
+
 tracts_df <- tracts_df %>% mutate(pct_water = AWATER/(AWATER+ALAND))
+
 class(tracts_df)
 file_name = paste0('combined_tracts_', year_selected, '.csv')
 write.csv(tracts_df, file.path(cleandir, file_name))
@@ -138,7 +140,9 @@ file_name_geotype = paste0('combined_geotype_unit_', year_selected, '.geojson')
 st_write(obj=combined_geotype_spatial_map, dsn=file.path(cleandir, file_name_geotype))
 
 combined_geotype_spatial_df <- combined_geotype_spatial_map %>% st_drop_geometry()
+
 combined_geotype_spatial_df <- combined_geotype_spatial_df %>% mutate(pct_water = AWATER/(AWATER+ALAND))
+
 class(combined_geotype_spatial_df)
 file_name = paste0('combined_geotype_unit_', year_selected, '.csv')
 write.csv(combined_geotype_spatial_df, file.path(cleandir, file_name))
