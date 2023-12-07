@@ -192,23 +192,100 @@ print(sum(np.isinf(output_demand_attributes.loc[:, 'job_diversity'])))
 
 ### job sink magnitude and trip distance distribution
 
-od_attribute_exist = 0 # if 0, execute the code generation, if 1, load existing output
-od_dist_by_tract = None  # create empty data frame to hold input data
-trip_sink_by_tract = None  # create empty data frame to hold input data
+od_attribute_exist = 1 # if 0, execute the data generation, if 1, load existing output
+
 out_od_attributes = None # create empty data frame to hold generated attributes
 
-dist_bin = [-1, 1.3, 3, 8, 100] # assume work location > 100 mi from home --> remote work and no travel needed
-dist_bin_label = ['trips 0-1.3 miles', 'trips 1.3-3 miles', 'trips 3-8 miles', 'trips >8 miles']
-for data in employment_od_data:
-    od_data = read_csv(os.path.join(path_to_emp_od, data))
-    od_data.loc[:, 'dist_bin'] = \
-        pd.cut(od_data.loc[:, 'distance'], bins = dist_bin,
-       labels = dist_bin_label)
-    od_data_by_dist = pd.pivot_table(od_data, 
-                                       values = 'S000',
-                                       index = 'w_tract', 
-                                       columns = 'dist_bin',
-                                       aggfunc="sum")
-    od_data_by_dist = od_data_by_dist.reset_index()
+dist_bin = [-1, 1.3, 3, 8, 150, 5000] 
+dist_bin_label = ['jobs 0-1.3 miles', 'jobs 1.3-3 miles', 'jobs 3-8 miles', 'jobs >8 miles', 'remote jobs']
+
+if od_attribute_exist == 0: # run heavy comutation to generate od attributes
+    od_dist_by_tract = None  # create empty data frame to hold input data
+    trip_by_home_tract = None  # create empty data frame to hold input data
+    trip_by_work_tract = None  # create empty data frame to hold input data
+    for data in employment_od_data:
+        print('processing od data ' + data)
+        od_data = read_csv(os.path.join(path_to_emp_od, data))
+        
+        # trip distance distribution
+        od_data.loc[:, 'dist_bin'] = \
+            pd.cut(od_data.loc[:, 'distance'], bins = dist_bin,
+           labels = dist_bin_label)
+        od_data_by_dist = pd.pivot_table(od_data, 
+                                           values = 'S000',
+                                           index = 'w_tract', 
+                                           columns = 'dist_bin',
+                                           aggfunc = "sum")
+        od_data_by_dist = od_data_by_dist.reset_index()
+        od_data_by_dist = od_data_by_dist.fillna(0)
+        od_data_by_dist.loc[:, 'total_emp'] = od_data_by_dist.loc[:, dist_bin_label].sum(axis = 1)
+        od_data_by_dist = od_data_by_dist.loc[od_data_by_dist['total_emp'] > 0 ] 
+        # fraction only available to zones with non-zero jobs
+        
+        # calculate fraction of trips by distance bin
+        od_data_by_dist.loc[:, dist_bin_label] = od_data_by_dist.loc[:, dist_bin_label].div(
+            od_data_by_dist.loc[:, 'total_emp'], axis = 0)
+        od_dist_by_tract = pd.concat([od_dist_by_tract, od_data_by_dist])
+        
+        
+        # trip sink magnitude (aggregation performed after concat to account for work/home in different states)
+        od_by_home = od_data.groupby('h_tract')[['S000']].sum()
+        
+        od_by_home = od_by_home.reset_index()
+        od_by_home.columns = ['GEOID', 'jobs_by_home']
+        trip_by_home_tract = pd.concat([trip_by_home_tract, od_by_home])
+        
+        od_by_work = od_data.groupby('w_tract')[['S000']].sum()
+        od_by_work = od_by_work.reset_index()
+        od_by_work.columns = ['GEOID', 'jobs_by_work']
+        trip_by_work_tract = pd.concat([trip_by_work_tract, od_by_work])
+        # break
     
-    break
+    print('if O-D data contains duplicated geoid:')
+    print(od_dist_by_tract['w_tract'].duplicated().any())
+    trip_by_home_tract = trip_by_home_tract.groupby('GEOID')[['jobs_by_home']].sum()
+    trip_by_home_tract = trip_by_home_tract.reset_index()
+    
+    trip_by_work_tract = trip_by_work_tract.groupby('GEOID')[['jobs_by_work']].sum()
+    trip_by_work_tract = trip_by_work_tract.reset_index()
+    
+    out_od_attributes = od_dist_by_tract
+    out_od_attributes = out_od_attributes.rename(columns = {'w_tract': 'GEOID'})
+    
+    out_od_attributes = pd.merge(out_od_attributes, trip_by_home_tract, 
+                                 on = 'GEOID', how = 'left')
+    
+    out_od_attributes = pd.merge(out_od_attributes, trip_by_work_tract, 
+                                 on = 'GEOID', how = 'left')
+    
+    out_od_attributes = out_od_attributes.fillna(0)
+    
+    out_od_attributes.loc[:, 'job_sink_mag'] = \
+        out_od_attributes.loc[:, 'jobs_by_work'] / out_od_attributes.loc[:, 'jobs_by_home']
+    
+    out_od_attributes.to_csv('Demand/CleanData/lehd_od_trip_characteristics.csv', index = False)
+else: # load pre-generated data
+    out_od_attributes = read_csv('Demand/CleanData/lehd_od_trip_characteristics.csv')
+
+# <codecell>
+# append OD characteristics to output metrics
+var_list = ['GEOID', 'jobs 0-1.3 miles', 'jobs 1.3-3 miles', 'jobs 3-8 miles',
+            'jobs >8 miles', 'remote jobs', 'job_sink_mag']
+out_od_attributes_short = out_od_attributes[var_list]
+
+output_demand_attributes = pd.merge(output_demand_attributes,
+                                    out_od_attributes_short,
+                                    on = 'GEOID', how = 'left')
+
+# check missing
+
+for var in var_list:
+    if var == 'GEOID':
+        continue
+    else:
+        print('total missing values in ' + var)
+        print(output_demand_attributes.loc[:, var].isnull().sum())
+        
+        # check infinity
+        print('total infinity values in ' + var)
+        print(sum(np.isinf(output_demand_attributes.loc[:, var])))
