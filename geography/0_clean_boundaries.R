@@ -66,7 +66,9 @@ file_name = paste0('combined_tracts_', year_selected, '.geojson')
 st_write(obj=tracts, dsn=file.path(cleandir, file_name))
 
 tracts_df <- tracts %>% st_drop_geometry()
-tracts_df <- tracts_df %>% mutate(pct_water = AWATER/ALAND)
+
+tracts_df <- tracts_df %>% mutate(pct_water = AWATER/(AWATER+ALAND))
+
 class(tracts_df)
 file_name = paste0('combined_tracts_', year_selected, '.csv')
 write.csv(tracts_df, file.path(cleandir, file_name))
@@ -127,7 +129,7 @@ crosswalk_cbsa_part <- crosswalk_cbsa_part %>% select(spatial_id, is_cbsa) %>% d
 crosswalk_cbsa_part <- crosswalk_cbsa_part %>% mutate(spatial_id = str_pad(spatial_id, 5, pad = "0"))
 # append county geometry
 crosswalk_cbsa_part <- merge(crosswalk_cbsa_part, cbsa,
-                               by.x = 'spatial_id', by.y = 'GEOID', all.x = TRUE, all.y=FALSE) 
+                             by.x = 'spatial_id', by.y = 'GEOID', all.x = TRUE, all.y=FALSE) 
 crosswalk_cbsa_part <- crosswalk_cbsa_part %>% select(spatial_id, is_cbsa, ALAND, AWATER, geometry)  
 
 # combine county and cbsa
@@ -138,7 +140,9 @@ file_name_geotype = paste0('combined_geotype_unit_', year_selected, '.geojson')
 st_write(obj=combined_geotype_spatial_map, dsn=file.path(cleandir, file_name_geotype))
 
 combined_geotype_spatial_df <- combined_geotype_spatial_map %>% st_drop_geometry()
-combined_geotype_spatial_df <- combined_geotype_spatial_df %>% mutate(pct_water = AWATER/ALAND)
+
+combined_geotype_spatial_df <- combined_geotype_spatial_df %>% mutate(pct_water = AWATER/(AWATER+ALAND))
+
 class(combined_geotype_spatial_df)
 file_name = paste0('combined_geotype_unit_', year_selected, '.csv')
 write.csv(combined_geotype_spatial_df, file.path(cleandir, file_name))
