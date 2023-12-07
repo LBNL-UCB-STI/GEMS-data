@@ -34,7 +34,7 @@ def query_osmnx_stats(geometry, var_to_keep):
 
 def add_df_attr(args):
     df, i, var_to_keep = args
-    out_path = 'Network/RawData/OSMNX/osmnx_stats_by_tract_chunk_' + str(i) + '.csv'
+    out_path = 'Network/CleanData/OSMNX/osmnx_stats_by_tract_chunk_' + str(i) + '.csv'
     if os.path.exists(out_path):
         return True
     df.loc[:, var_to_keep] = \

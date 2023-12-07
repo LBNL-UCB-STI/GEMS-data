@@ -289,3 +289,11 @@ for var in var_list:
         # check infinity
         print('total infinity values in ' + var)
         print(sum(np.isinf(output_demand_attributes.loc[:, var])))
+        
+# <codecell>
+
+### place holder for more demand variables
+
+# <codecell>
+output_demand_attributes.to_csv('Demand/CleanData/microtype_inputs_demand.csv')
+
