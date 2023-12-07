@@ -7,7 +7,8 @@
 
 ## Theme A: Geographic boundary
 ### a1. collecting micro-geotype boundary
-step 1: collecting and cleaning spatial crosswalk file for LODES8 (using 2020 census boundary)
+
+**step 1: collecting and cleaning spatial crosswalk file for LODES8** (using 2020 census boundary)
 
 **code**: [geography/clean_lodes8_crosswalk.py](clean_lodes8_crosswalk.py)
 
@@ -16,7 +17,8 @@ https://lehd.ces.census.gov/data/
 
 **output**:spatial_boundary/CleanData/cleaned_lodes8_crosswalk.csv
 
-step 2: Collecting Census 2020 Tiger line/boundary for census tract, county and CBSA
+
+**step 2: Collecting Census 2020 Tiger line/boundary for census tract, county and CBSA**
 
 **code**:[geography/0_clean_boundaries.R](0_clean_boundaries.R)
 
@@ -47,7 +49,8 @@ https://www2.census.gov/geo/docs/maps-data/data/rel2020/tract/tab20_tract20_trac
 
 ## Theme C: Collect demand related attributes
 ### c1. clean and processing LEHD LODES8 data
-step 1: collecting LEHD LODES 8 data
+
+**step 1: collecting LEHD LODES 8 data**
 
 **code**:[0_clean_lehd_2017.R](demand/0_clean_lehd_2017.R)
 
@@ -60,7 +63,8 @@ step 1: collecting LEHD LODES 8 data
 * Demand/CleanData/wac_tract_{year}.csv
 * Demand/CleanData/OD/*
 
-step 2: calculate commute distance (using great circle distance between OD centroids)
+
+**step 2: calculate commute distance** (using great circle distance between OD centroids)
 
 **code**:[generate_od_distance.py](demand/generate_od_distance.py)
 
