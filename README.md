@@ -10,7 +10,7 @@
 
 **step 1: collecting and cleaning spatial crosswalk file for LODES8** (using 2020 census boundary)
 
-**code**: [geography/clean_lodes8_crosswalk.py](clean_lodes8_crosswalk.py)
+**code**: [clean_lodes8_crosswalk.py](geography/clean_lodes8_crosswalk.py)
 
 **input**: downloaded state-by-state crosswalk from LEHD website (the R API doesn't work)
 https://lehd.ces.census.gov/data/
@@ -20,7 +20,7 @@ https://lehd.ces.census.gov/data/
 
 **step 2: Collecting Census 2020 Tiger line/boundary for census tract, county and CBSA**
 
-**code**:[geography/0_clean_boundaries.R](0_clean_boundaries.R)
+**code**:[0_clean_boundaries.R](geography/0_clean_boundaries.R)
 
 **Input**: queried 2020 Census boundary from API in R;
 Cleaned census crosswalk file downloaded here:
