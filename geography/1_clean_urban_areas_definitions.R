@@ -121,7 +121,11 @@ tracts_with_ua_nodup = tracts_with_ua_nodup %>%
     UA_population < 5000 & ua_housing >= 2000 ~ 'other_urban', 
     UA_population < 5000 & ua_housing < 2000 ~ 'rural' ))
 
-table(tracts_with_ua_nodup$fhwa_urban_area, tracts_with_ua_nodup$fhwa_type)
+# final adjustment (for missing values)
+tracts_with_ua_nodup <- tracts_with_ua_nodup %>%
+  mutate(fhwa_urban_area = ifelse((census_urban_area == 1) & is.na(UA_NAME), 'other_urban', fhwa_urban_area))
+
+table(tracts_with_ua_nodup$fhwa_urban_area, tracts_with_ua_nodup$census_urban_area)
 
 
 #export urban divisions
