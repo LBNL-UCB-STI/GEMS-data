@@ -72,20 +72,60 @@ nlcd_data_by_tract<- nlcd_data_centroid_df %>%
 write.csv(nlcd_data_by_tract, file.path('Land_use', cleandir, 'tract_level_land_use_no_ak.csv'))
 
 # fill land use for AK with old NLCD
-ak_nlcd_path <- 'emiss_shp2017/NLCD/CONUS_AK_NLCD_2011_500m_WGS.shp'
-ak_nlcd_data <- st_read(file.path('Land_use', datadir, ak_nlcd_path))
+ak_hi_nlcd_path <- 'emiss_shp2017/NLCD/CONUS_AK_NLCD_2011_500m_WGS.shp'
+ak_hi_nlcd_data <- st_read(file.path('Land_use', datadir, ak_hi_nlcd_path))
 
-ak_nlcd_data$area <- st_area(ak_nlcd_data)
-ak_nlcd_data_centroid <- st_centroid(ak_nlcd_data)
-ak_nlcd_data_sample <- head(ak_nlcd_data, 1000)
+ak_hi_nlcd_data$area <- st_area(ak_hi_nlcd_data)
+ak_nlcd_data_centroid <- st_centroid(ak_hi_nlcd_data)
+ak_nlcd_data_sample <- head(ak_nlcd_data_centroid, 1000)
 plot(ak_nlcd_data_sample[, 'GRIDCODE'])
 # get ak boundary
 states <- tigris::states(cb = TRUE)
-ak_boundary <- states %>% dplyr::filter(STUSPS == 'AK')
-plot(st_geometry(ak_boundary))
-ak_boundary <- st_transform(ak_boundary, 4326) # re-project data
-ak_nlcd_data_centroid <- st_intersection(ak_nlcd_data_centroid, ak_boundary) # only select grid cell in AK
+ak_hi_boundary <- states %>% dplyr::filter(STUSPS == 'AK' | STUSPS == 'HI')
+plot(st_geometry(ak_hi_boundary))
+ak_hi_boundary <- st_transform(ak_hi_boundary, 4326) # re-project data
 
+# using 'st_intersects', which gives a boolean for if points within polygon
+ak_nlcd_data_centroid <- ak_nlcd_data_centroid[which(unlist(st_intersects(ak_nlcd_data_centroid, ak_hi_boundary)) == 1),] 
+
+plot(st_geometry(ak_hi_boundary[ak_hi_boundary$STUSPS == 'AK',]))
+plot(ak_nlcd_data_centroid[1:1000, 'GRIDCODE'], add = TRUE)
+#ak_nlcd_data_sample <- st_intersection(ak_nlcd_data_sample, ak_hi_boundary)
+
+# only select grid cell in AK or HI, takes hours to run
+ak_nlcd_data_centroid <- ak_nlcd_data_centroid %>% select(ID, GRIDCODE, STATEFP, area, geometry)
+
+# assign NLCD data to ak, hi tracts
+ak_hi_tracts <- us_census_tract %>% dplyr::filter(STATEFP %in% c('02', '15'))
+plot(st_geometry(ak_hi_tracts))
+
+ak_nlcd_data_centroid <- st_join(ak_nlcd_data_centroid, ak_hi_tracts,
+                              join = st_nearest_feature, left = TRUE)
+
+ak_nlcd_data_centroid_df <- ak_nlcd_data_centroid %>% st_drop_geometry()
+write.csv(ak_nlcd_data_centroid_df, file.path('Land_use', cleandir, 'assigned_nlcd_to_tract_ak_hi.csv'))
+
+nlcd_data_centroid_sample <- head(ak_nlcd_data_centroid_df, 1000)          
+selected_tracts <- unique(nlcd_data_centroid_sample$GEOID)
+selected_tracts_sf <- ak_hi_tracts[ak_hi_tracts$GEOID %in% selected_tracts,]
+plot(st_geometry(selected_tracts_sf))
+plot(nlcd_data_centroid_sample[, 'GEOID'], add= TRUE)
+
+# nlcd_data_by_tract <- nlcd_data_centroid_df %>% 
+#   dplyr::group_by(GEOID, GRIDCODE) %>% 
+#   dplyr::summarise(area = sum(area)) %>% 
+#   tidyr::spread(GRIDCODE, area)
+
+nlcd_data_centroid_sample_df <- nlcd_data_centroid_sample %>% st_drop_geometry()
+
+ak_nlcd_data_centroid_df <- ak_nlcd_data_centroid_df %>% 
+  dplyr::mutate(area = as.numeric(area)) # unit in m^2
+
+ak_nlcd_data_by_tract<- ak_nlcd_data_centroid_df %>%
+  tidyr::pivot_wider(names_from = GRIDCODE, values_from = area, 
+                     values_fn = sum, values_fill = 0)
+
+write.csv(ak_nlcd_data_by_tract, file.path('Land_use', cleandir, 'tract_level_land_use_ak_hi.csv'))
 
 # check final results
 us_census_tract_no_nlcd <- us_census_tract %>% 
