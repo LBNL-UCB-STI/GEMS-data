@@ -16,13 +16,14 @@ state = 'california'
 
 hpms_geometry <- st_read(paste0(state, '_pr_2019.shp'))
 crs_hpms <- st_crs(hpms_geometry)
-state_tracts = get_acs(
-  geography = "tract",
-  year = 2021,
-  variables = c('B01003_001'),
-  state = state,
-  geometry = TRUE
-)
+#state_tracts = get_acs(
+#  geography = "tract",
+#  year = 2021,
+#  variables = c('B01003_001'),
+#  state = state,
+#  geometry = TRUE
+#)
+state_tracts <- st_read("C:/FHWA_R2/spatial_boundary/CleanData/combined_tracts_2020.geojson")
 state_tracts <- st_transform(state_tracts, crs = crs_hpms)
 #plot(st_geometry(st_zm(hpms_geometry)))
 sf::sf_use_s2(FALSE) 
@@ -34,7 +35,7 @@ hpms_geometry_by_tracts$Length = st_length(hpms_geometry_by_tracts) # re-generat
 hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% mutate(lanemiles = as.numeric(Through_La * Length / 1609.34)) # compute lane miles
 hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% filter(lanemiles > 0) # remove invalid links
 setnames(hpms_geometry_by_tracts,"SHAPE__Len","Shape_Leng")
-hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% select(-variable, -estimate, -moe, -Shape_Leng)
+#hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% select(-variable, -estimate, -moe, -Shape_Leng)
 
 
 hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% mutate(g_type = st_geometry_type(.))
