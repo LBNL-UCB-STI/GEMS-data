@@ -23,8 +23,13 @@ library(lwgeom) # to calculate area
 library(tidyr) # to use spread func
 library(raster) # for HI ige file
 library(stars)
+library(geojsonsf)
 
 sf_use_s2(FALSE)
+
+#release the geojson cap
+library(base)
+Sys.setenv(OGR_GEOJSON_MAX_OBJ_SIZE=50000)
 
 # load NLCD data
 nlcd_path <- 'US_2020_nlcd_shapefiles_24mar2023/NLCD/nlcd_2019_land_cover_l48_20210604_500m_ll.shp'
@@ -139,7 +144,7 @@ hi_nlcd_path <- 'hi_hawaii_2010_ccap_hr_land_cover20150120/hi_hawaii_2010_ccap_h
 #tif = system.file(file.path('Land_use', datadir, hi_nlcd_path), package = "stars")
 hi_nlcd_data = read_stars(file.path('Land_use', datadir, hi_nlcd_path))
 hi_nlcd_data_sf <- st_as_sf(hi_nlcd_data, as_points = FALSE, merge = TRUE)
-st_write(hi_nlcd_data_sf, file.path('Land_use', datadir, 'HI_NLCD_2010_P1.geojson'))
+st_write(hi_nlcd_data_sf, file.path('Land_use', datadir, 'HI_NLCD_2010_P1.geojson')) # island of hawaii
 hi_nlcd_data_sample <- head(hi_nlcd_data_sf, 1000)
 plot(hi_nlcd_data_sample)
 
@@ -193,3 +198,36 @@ st_write(hi_nlcd_data_p7_sf, file.path('Land_use', datadir, 'HI_NLCD_2010_kauai.
 # us_census_tract_no_nlcd <- us_census_tract %>% 
 #   dplyr::filter(!GEOID %in%  unique(nlcd_data_centroid_df$GEOID))
 # plot(st_geometry(us_census_tract_no_nlcd))
+
+hi_tracts <- us_census_tract %>% dplyr::filter(STATEFP %in% c('15'))
+plot(st_geometry(hi_tracts))
+
+#'HI_NLCD_2010_P1.geojson', 'HI_NLCD_2010_oahu.geojson', 'HI_NLCD_2010_molokai.geojson',  
+#'#'HI_NLCD_2010_maui.geojson', 'HI_NLCD_2010_lanai.geojson', 'HI_NLCD_2010_kauai.geojson',  'HI_NLCD_2010_niihau.geojson'
+list_of_hawaii_island_geojson <- c('HI_NLCD_2010_oahu.geojson', 'HI_NLCD_2010_maui.geojson', 'HI_NLCD_2010_P1.geojson')
+
+for (file in list_of_hawaii_island_geojson){
+ 
+  file_name <- strsplit(file, '.geojson')[[1]][1]
+  print(file_name)
+  hi_nlcd_data <- st_read( file.path('Land_use', datadir, file))
+  hi_nlcd_data <- st_transform(hi_nlcd_data, 4326)
+  colnames(hi_nlcd_data) <- c('land_type', 'geometry')
+  hi_nlcd_data$area <- st_area(hi_nlcd_data)
+  hi_nlcd_data_centroid <- st_centroid(hi_nlcd_data)
+  hi_nlcd_data_centroid <- st_transform(hi_nlcd_data_centroid, 4326)
+  hi_nlcd_data_sample <- head(hi_nlcd_data_centroid, 1000)
+  
+  hi_nlcd_data_centroid <- st_join(hi_nlcd_data_centroid, hi_tracts,
+                                join = st_nearest_feature, left = TRUE)
+  
+  hi_nlcd_data_centroid_df <- hi_nlcd_data_centroid %>% st_drop_geometry()
+  hi_nlcd_data_centroid_df <- hi_nlcd_data_centroid_df %>% 
+    dplyr::mutate(area = as.numeric(area)) # unit in m^2
+  
+  hi_nlcd_data_by_tract<- hi_nlcd_data_centroid_df %>%
+    tidyr::pivot_wider(names_from = land_type, values_from = area, 
+                       values_fn = sum, values_fill = 0)
+  write.csv(hi_nlcd_data_by_tract, file.path('Land_use', cleandir, paste0(file_name, '.csv')))
+  #break
+}
