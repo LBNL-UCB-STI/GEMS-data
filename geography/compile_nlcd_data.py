@@ -154,5 +154,25 @@ US_NLCD_combined.loc[:,  'fraction'] = US_NLCD_combined.loc[:,  'area_m2'] / \
     US_NLCD_combined.groupby('GEOID')['area_m2'].transform('sum')
 US_NLCD_combined.to_csv(os.path.join(data_dir, 'processed_NLCD_data.csv'), index = False)
 
+# <codecell>
 
+import pygris
+import geopandas as gpd
+
+ca_tract = pygris.tracts(state = "CA", year = 2021)
+
+ca_tract.plot()
+
+# <codecell>
+#plot ca developed land 
+US_NLCD_selected = US_NLCD_combined.loc[US_NLCD_combined['land_type'] == 'Impervious Developed']
+US_NLCD_selected.loc[:, 'GEOID'] = US_NLCD_selected.loc[:, 'GEOID'].astype(str).str.zfill(11)
+ca_tract = ca_tract.merge(US_NLCD_selected, on ='GEOID', how = 'left')
+
+# <codecell>
+import matplotlib.pyplot as plt
+
+ca_tract.plot(column = 'fraction', legend=True)
+plt.title('Fraction of developed land')
+plt.savefig(os.path.join(data_dir, 'sample_NLCD_developed_land.png'), dpi = 300)
 
