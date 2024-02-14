@@ -9,6 +9,7 @@ from pandas import read_csv
 import os
 from os import listdir
 import pandas as pd
+import matplotlib.pyplot as plt
 
 os.chdir('C:/FHWA_R2/Land_use')
 data_dir = 'CleanData'
@@ -169,10 +170,79 @@ US_NLCD_selected = US_NLCD_combined.loc[US_NLCD_combined['land_type'] == 'Imperv
 US_NLCD_selected.loc[:, 'GEOID'] = US_NLCD_selected.loc[:, 'GEOID'].astype(str).str.zfill(11)
 ca_tract = ca_tract.merge(US_NLCD_selected, on ='GEOID', how = 'left')
 
+
+
 # <codecell>
-import matplotlib.pyplot as plt
+
 
 ca_tract.plot(column = 'fraction', legend=True)
 plt.title('Fraction of developed land')
 plt.savefig(os.path.join(data_dir, 'sample_NLCD_developed_land.png'), dpi = 300)
 
+ca_tract.to_file(os.path.join(data_dir, "sample_ca_nlcd.geojson"), driver='GeoJSON')
+
+
+# <codecell>
+
+# spatial imputation of missing values --> use value from nearest tracts with values
+select_attr = ['Impervious Developed', 'Developed Open Space']
+US_NLCD_selected =\
+    US_NLCD_combined.loc[US_NLCD_combined['land_type'].isin(select_attr)]
+US_NLCD_wide = pd.pivot_table(US_NLCD_selected, values = 'fraction', index=['GEOID'],
+                       columns = 'land_type', aggfunc="mean")
+US_NLCD_wide = US_NLCD_wide.reset_index()
+
+# <codecell>
+# load census tract boundary
+ct_file = '../spatial_boundary/CleanData/combined_tracts_2020.geojson'
+us_census_tract = gpd.read_file(ct_file)
+
+us_census_tract = us_census_tract.to_crs(epsg=3857)
+us_census_tract_centroid = us_census_tract.centroid
+
+us_census_tract_df = pd.DataFrame(us_census_tract.drop(columns='geometry'))
+us_census_tract_centroid = pd.concat([us_census_tract_df, us_census_tract_centroid], axis = 1)
+us_census_tract_centroid = gpd.GeoDataFrame(us_census_tract_centroid, geometry=0)
+
+# <codecell>
+US_NLCD_wide['GEOID'] = US_NLCD_wide['GEOID'].astype(str).str.zfill(11)
+us_census_tract_centroid['GEOID'] = us_census_tract_centroid['GEOID'].astype(str).str.zfill(11)
+us_census_tract_with_nlcd = us_census_tract_centroid.merge(US_NLCD_wide,
+                                                          on = 'GEOID',
+                                                          how = 'left')
+# <codecell>
+# impute from nearest location with values
+# Create a spatial index
+
+us_census_tract_no_missing = us_census_tract_with_nlcd.loc[~us_census_tract_with_nlcd['Impervious Developed'].isna()]
+us_census_tract_with_missing = us_census_tract_with_nlcd.loc[us_census_tract_with_nlcd['Impervious Developed'].isna()]
+sindex = us_census_tract_no_missing.sindex
+us_census_tract_no_missing = us_census_tract_no_missing.reset_index()
+# Find the nearest feature for each missing value
+nearest_features = \
+    sindex.nearest(us_census_tract_with_nlcd.geometry[us_census_tract_with_nlcd['Impervious Developed'].isna()])
+
+# Impute the missing values with the value of the nearest feature
+us_census_tract_with_missing = us_census_tract_with_missing.drop(columns = select_attr)
+
+imputed_1 = \
+    us_census_tract_no_missing['Impervious Developed'][nearest_features[1,]]
+    
+imputed_2 = \
+        us_census_tract_no_missing['Developed Open Space'][nearest_features[1,]]
+        
+us_census_tract_with_missing = pd.concat([us_census_tract_with_missing.reset_index(), 
+                                          imputed_1.reset_index(), 
+                                          imputed_2.reset_index()], axis = 1)
+
+us_census_tract_with_missing = us_census_tract_with_missing.drop(columns = 'index')
+us_census_tract_no_missing = us_census_tract_no_missing.drop(columns = 'index')
+
+us_census_tract_with_nlcd = pd.concat([us_census_tract_no_missing, us_census_tract_with_missing])
+ca_census_tract_with_nlcd = us_census_tract_with_nlcd.loc[us_census_tract_with_nlcd['STATEFP'] == '06']
+ca_census_tract_with_nlcd.to_file(os.path.join(data_dir, "sample_ca_nlcd_imputed.geojson"), driver='GeoJSON')
+    
+us_census_tract_with_nlcd_df = pd.DataFrame(us_census_tract_with_nlcd.drop(columns=0))
+us_census_tract_with_nlcd_df = us_census_tract_with_nlcd_df[['GEOID', 'Impervious Developed', 'Developed Open Space']]
+
+us_census_tract_with_nlcd_df.to_csv(os.path.join(data_dir, 'imputed_NLCD_data_dev_only.csv'), index = False)
