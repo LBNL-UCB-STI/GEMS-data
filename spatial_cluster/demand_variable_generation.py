@@ -32,7 +32,7 @@ census_year = '2020'
 boundary_and_area = read_csv('spatial_boundary/CleanData/combined_tracts_' + census_year + '.csv')
 population_data = read_csv('Demography/CleanData/acs_data_tracts_112023.csv')
 employment_location_data = read_csv('Demand/CleanData/wac_tract_2021.csv')
-land_use_data = read_csv('Land_use/CleanData/processed_NLCD_data.csv')
+land_use_data = read_csv('Land_use/CleanData/imputed_NLCD_data_dev_only.csv')
 urban_definition_data = read_csv('spatial_boundary/CleanData/urban_divisions_2021.csv')
 path_to_emp_od = 'Demand/CleanData/OD_distance'
 employment_od_data = listdir(path_to_emp_od)
@@ -295,22 +295,22 @@ for var in var_list:
 
 ### land use and land cover attributes
 var_list = ['Impervious Developed', 'Developed Open Space']
-land_use_data_selected = land_use_data.loc[land_use_data['land_type'].isin(var_list)]
-land_use_data_wide = pd.pivot_table(land_use_data_selected,
-                                    values = 'fraction', index = ['GEOID'], 
-                                    columns = 'land_type', 
-                                    aggfunc = "sum")
-land_use_data_wide = land_use_data_wide.fillna(0)
-land_use_data_wide = land_use_data_wide.reset_index()
+# land_use_data_selected = land_use_data.loc[land_use_data['land_type'].isin(var_list)]
+# land_use_data_wide = pd.pivot_table(land_use_data_selected,
+#                                     values = 'fraction', index = ['GEOID'], 
+#                                     columns = 'land_type', 
+#                                     aggfunc = "sum")
+# land_use_data_wide = land_use_data_wide.fillna(0)
+# land_use_data_wide = land_use_data_wide.reset_index()
 # land_use_data_wide.loc[:, 'Agriculture Land'] = land_use_data_wide.loc[:, 'Pasture Land'] + \
 #     land_use_data_wide.loc[:, 'Crop Land']
 
-land_use_data_wide = \
-    land_use_data_wide[['GEOID', 'Impervious Developed', 'Developed Open Space']]
+# land_use_data_wide = \
+#     land_use_data_wide[['GEOID', 'Impervious Developed', 'Developed Open Space']]
 
 #land_use_data_wide
 output_demand_attributes = pd.merge(output_demand_attributes,
-                                    land_use_data_wide,
+                                    land_use_data,
                                     on = 'GEOID', how = 'left')
 
 # check missing
