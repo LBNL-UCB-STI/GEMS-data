@@ -40,8 +40,11 @@ xwalk <- fread(file.path(boundarydir, 'cleaned_lodes8_crosswalk_with_ID.csv')) %
   mutate(tract = as.character(trct))
 
 rownames(FHWA_data) <- FHWA_data$tract # set tract as row name for identifier
+FHWA_data[sapply(FHWA_data, is.infinite)] <- NA # replace infinite with NA
+
 na.count <- colSums(is.na(FHWA_data)) # check number of missing values for each variables
-max(na.count/dim(FHWA_data)[1]) # max missing is about 0.1%
+max(na.count/dim(FHWA_data)[1]) # max missing is about 0.5%
+
 
 # select variable for clustering
 export = as.data.frame(FHWA_data) %>%
@@ -50,7 +53,7 @@ export = as.data.frame(FHWA_data) %>%
   'jobs 0-1.3 miles', 'jobs 1.3-3 miles', 'jobs 3-8 miles', 'jobs >8 miles', 'remote jobs', 
   'job_sink_mag', 'Impervious Developed', 'Developed Open Space', 'census_urban_area', 'tract')) # remove identifiers 
 
-export[sapply(export, is.infinite)] <- NA
+
 #better define column names
 colnames(export) <- c('pop_per_acre', 'jobs_per_acre', 'jobs_resident_bal', 'job_diversity', 
                       'jobs_dist_bin1', 'jobs_dist_bin2', 'jobs_dist_bin3', 'jobs_dist_bin4', 'remote_jobs', 
@@ -71,6 +74,7 @@ for (i in 1:length(colnames(export))){
 write.csv(export, file.path(datadir, "microtypes_inputs_demand_scaled.csv"), row.names = F)
 
 data_scaled <- imputeMissings(export)
+
 urban_data_scaled <- data_scaled %>% filter(census_urban_area == '1')
 rural_data_scaled <- data_scaled %>% filter(census_urban_area == '0')
 
@@ -245,13 +249,15 @@ FHWA_data <- FHWA_data %>%
          'developed_open_space'="Developed Open Space")
 
 FHWA_data_to_plot <- FHWA_data %>% 
-  select(GEOID, pop_per_acre)
+  select(GEOID, pop_per_acre, jobs_per_acre)
 
 california_tracts <- california_tracts %>%
   left_join(FHWA_data_to_plot, by = 'GEOID')
 plot(california_tracts[,'pop_per_acre'],
      pal = sf.colors, border = NA, key.pos = 3, nbreaks = 6, logz=TRUE, key.length = 0.6)
 
+plot(california_tracts[,'jobs_per_acre'],
+     pal = sf.colors, border = NA, key.pos = 3, nbreaks = 6, logz=TRUE, key.length = 0.6)
 # append demand typology to raw data
 FHWA_data <- FHWA_data %>%
   left_join(data_scaled_to_plot, by = 'GEOID')
