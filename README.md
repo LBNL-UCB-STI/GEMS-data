@@ -74,8 +74,28 @@ Demand/CleanData/OD/* and spatial_boundary/CleanData/combined_tracts_{year}.csv
 **output**:
 * Demand/CleanData/OD_distance/*
 
-## Theme D: Network generation
-### d1. processing OSMNX data at census tract level
+## Theme D: Collect land use attributes
+### D1. land use characteristics from NLCD data
+
+**step 1: collecting and cleaning NLCD data**
+**Code**:[process_NLCD_data.R](geography/process_NLCD_data.R)
+
+**Input**:
+* CONUS: Land_use/RawData/US_2020_nlcd_shapefiles_24mar2023/NLCD
+* Alaska: Land_use/RawData/emiss_shp2017/NLCD
+* Hawaii: Land_use/RawData/hi_hawaii_2010_ccap_hr_land_cover20150120
+
+**Output**:
+
+
+### D2. uban area definition from U.S.Census Bureau
+**Code**:[1_clean_urban_areas_definitions.R](geography/1_clean_urban_areas_definitions.R)
+
+**Input**: 
+Spatial crosswalk between urban area and census block: spatial_boundary/RawData/2020_UA_BLOCKS.txt'
+
+## Theme E: Network generation
+### e1. processing OSMNX data at census tract level
 
 **code**: [generate_OSMNX_metrics.py](network/generate_OSMNX_metrics.py)
 
