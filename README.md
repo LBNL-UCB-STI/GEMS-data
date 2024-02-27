@@ -1,7 +1,6 @@
 # GEMS Data Generation 
 
 ## POC: Xiaodan Xu, Ph.D. (XiaodanXu@lbl.gov)
-
 ## Latest update: 12/07/2023
 
 
