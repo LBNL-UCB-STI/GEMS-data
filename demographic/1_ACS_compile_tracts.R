@@ -21,7 +21,7 @@ set_path_to_census("~/Desktop/my_census_data")
 # census_api_key("e74b4d8c97989e07245040ac84168a638247af9a", overwrite = TRUE)
 # options(tigris_use_cache = TRUE)
 readRenviron("~/.Renviron")
-analysis_year = 2021
+analysis_year = 2017
 # 
 
 us <- unique(fips_codes$state)[1:51]
@@ -249,8 +249,8 @@ acs <- Reduce(function(x,y) merge(x = x, y = y, by = c("GEOID", "NAME"), na.omit
 ###########
 # export CSV files
 ###########
-
-fwrite(acs, file = "CleanData/acs_data_tracts_112023.csv", row.names = F)
+file_name = paste0("CleanData/acs_data_tracts_", analysis_year, ".csv")
+fwrite(acs, file = file_name, row.names = F)
 
 
 
