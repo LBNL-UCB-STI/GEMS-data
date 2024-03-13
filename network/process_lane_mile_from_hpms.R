@@ -2,46 +2,38 @@ library(sf)
 library(dplyr)
 library(data.table)
 library(tidycensus)
+library(tools)
 
-# using this key at the first time of using tidycensus
-census_api_key("d49f1c9b81751571b083252dfbb8ac14ae8b63b7", install = TRUE, overwrite=TRUE) 
-#########
 readRenviron("~/.Renviron")
 
-# setwd("/Volumes/LaCie/project_backup/GEMS/BILD-AQ/HPMS/")
-setwd("C:/Users/jrlazarus/Documents/GEMS/Input-Data/Network/")
-state = 'california'
-# network_arnold <- fread(paste0(state, '/CA_arnold.csv'), h = T) # this data is not useful!!
-#  network_hpms <- fread(paste0(state, '/CA_summary.txt'), h = T)  # this data is not useful too!!
+merge_census_hpms<- function(state='california2017',state_tracts,year){
+  print(state)
+  hpms_geometry <- st_read(paste0(state,'/',toTitleCase(substr(f,10,50)), '.shp')) # read HPMS data
+  crs_hpms <- st_crs(hpms_geometry)
+  
+  # assign tracts to each link
+  hpms_geometry_by_tracts = st_intersection(st_zm(hpms_geometry), state_tracts)
+  
+  hpms_geometry_by_tracts$Length = st_length(hpms_geometry_by_tracts) # re-generate link length after split network by tracts
+  hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% mutate(lanemiles = as.numeric(Through_La * Length / 1609.34)) # compute lane miles
+  hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% filter(lanemiles > 0) # remove invalid links
+  hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% mutate(g_type = st_geometry_type(.)) 
+  hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% filter(g_type %in% c('LINESTRING', 'MULTILINESTRING'))
+  st_write(hpms_geometry_by_tracts, paste0( state, '_HPMS_with_',year,'_GEOID_LANEMILE.geojson'),append=FALSE) # save merged data
+}
 
-hpms_geometry <- st_read(paste0(state, '_pr_2019.shp'))
-crs_hpms <- st_crs(hpms_geometry)
-#state_tracts = get_acs(
-#  geography = "tract",
-#  year = 2021,
-#  variables = c('B01003_001'),
-#  state = state,
-#  geometry = TRUE
-#)
-state_tracts <- st_read("C:/FHWA_R2/spatial_boundary/CleanData/combined_tracts_2020.geojson")
-state_tracts <- st_transform(state_tracts, crs = crs_hpms)
-#plot(st_geometry(st_zm(hpms_geometry)))
+# load HPMS data
+setwd("C:/FHWA_R2/Network/RawData/") # set input directory
+file_list <- list.files("HPMS2017", full.names = TRUE) # list all HPMS data files
+file_list <- file_list[!grepl("zip", file_list, ignore.case = TRUE)]
+
+# load state census tracts (whole U.S.)
+tracts <- st_read("C:/FHWA_R2/spatial_boundary/CleanData/combined_tracts_2020.geojson")
+tracts <- st_transform(tracts, crs = crs_hpms)
 sf::sf_use_s2(FALSE) 
 
-# assign tracts to each link
-hpms_geometry_by_tracts = st_intersection(st_zm(hpms_geometry), state_tracts)
-setnames(hpms_geometry_by_tracts,"through_la","Through_La")
-hpms_geometry_by_tracts$Length = st_length(hpms_geometry_by_tracts) # re-generate link length after split network by tracts
-hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% mutate(lanemiles = as.numeric(Through_La * Length / 1609.34)) # compute lane miles
-hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% filter(lanemiles > 0) # remove invalid links
-setnames(hpms_geometry_by_tracts,"SHAPE__Len","Shape_Leng")
-#hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% select(-variable, -estimate, -moe, -Shape_Leng)
-
-
-hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% mutate(g_type = st_geometry_type(.))
-hpms_geometry_by_tracts <- hpms_geometry_by_tracts %>% filter(g_type %in% c('LINESTRING', 'MULTILINESTRING'))
-st_write(hpms_geometry_by_tracts, paste0('output/', state, '_HPMS_with_GEOID_LANEMILE.geojson'),append=FALSE)
-#plot(hpms_geometry_by_tracts[, 'GEOID'])
-
+for (f in file_list){
+  merge_census_hpms(f,tracts,2020)
+}
 
 
