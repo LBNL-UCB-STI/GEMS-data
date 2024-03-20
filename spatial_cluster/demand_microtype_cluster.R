@@ -362,17 +362,17 @@ spider2 <- radarchart(radar_data[c(1:2,4), ], axistype = 0, pty = 32, cex.main =
 dev.off()
 
 png(file = file.path(figuredir,"spider_12fac_clara6_cluster3.png"),height = 700, width = 700)
-spider3 <- radarchart(radar_data[c(1:2,5), ], axistype = 0, pty = 32, pcol = "#636363", cex.main = 2, pfcol="#FFA35CFF" , plwd=4 , palcex = 1.2,
+spider3 <- radarchart(radar_data[c(1:2,5), ], axistype = 0, pty = 32, pcol = "#636363", cex.main = 2, pfcol="#C527D8FF" , plwd=4 , palcex = 1.2,
                       cglty = 3, cglwd = 1, title = "Suburban", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, vlcex = 1.2)
 dev.off()
 
 png(file = file.path(figuredir,"spider_12fac_clara6_cluster4.png"),height = 700, width = 700)
-spider4 <- radarchart(radar_data[c(1:2,6), ], axistype = 0, pty = 32, pcol = "#636363", cex.main = 2, pfcol= "#FFF50AFF", plwd=4 , palcex = 1.2,
+spider4 <- radarchart(radar_data[c(1:2,6), ], axistype = 0, pty = 32, pcol = "#636363", cex.main = 2, pfcol= "#FFA35CFF", plwd=4 , palcex = 1.2,
                       cglty = 3, cglwd = 1, title = "Urban center", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, vlcex = 1.2)
 dev.off()
 
 png(file = file.path(figuredir,"spider_12fac_clara6_cluster5.png"),height = 700, width = 700)
-spider5 <- radarchart(radar_data[c(1:2,7), ], axistype = 0,  pty = 32, pcol = "#636363", cex.main = 2, pfcol= "#C527D8FF" , plwd=4 , palcex = 1.2,
+spider5 <- radarchart(radar_data[c(1:2,7), ], axistype = 0,  pty = 32, pcol = "#636363", cex.main = 2, pfcol=  "#FFF50AFF", plwd=4 , palcex = 1.2,
                       cglty = 3, cglwd = 1, title = "Urban industrial", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, vlcex = 1.2)
 dev.off()
 
