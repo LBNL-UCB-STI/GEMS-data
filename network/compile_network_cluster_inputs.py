@@ -45,8 +45,8 @@ network_data_sel = network_data_sel.rename(columns = {'tract':'GEOID'})
 osm_attr = ['GEOID', 'self_loop_proportion', 'street_density', 'avg_street_length', 'circuity_avg']
 osm_data_sel = osm_data[osm_attr]
 
-tract_cross_attr = ['GEOID_TRACT_20', 'AREALAND_TRACT_20',  'GEOID_TRACT_10', 'AREALAND_TRACT_10']
-crosswalk_2010_2020_sel = crosswalk_2010_2020[tract_cross_attr]
+# tract_cross_attr = ['GEOID_TRACT_20', 'AREALAND_TRACT_20',  'GEOID_TRACT_10', 'AREALAND_TRACT_10']
+# crosswalk_2010_2020_sel = crosswalk_2010_2020[tract_cross_attr]
 
 # <codecell>
 network_data_sel = network_data_sel.drop_duplicates(subset = ['GEOID'], keep = 'first')
@@ -54,13 +54,13 @@ network_output = pd.merge(spatial_crosswalk_sel, network_data_sel,
                           on = 'GEOID', how = 'left')
 network_output = pd.merge(network_output, osm_data_sel, 
                           on = 'GEOID', how = 'left')
-network_output = pd.merge(network_output, crosswalk_2010_2020_sel, 
-                          left_on = 'GEOID', right_on = 'GEOID_TRACT_20', how = 'left')
+# network_output = pd.merge(network_output, crosswalk_2010_2020_sel, 
+#                           left_on = 'GEOID', right_on = 'GEOID_TRACT_20', how = 'left')
 
 # <codecell>
 
 # prepare output
-network_output = network_output.drop(columns = ['GEOID_TRACT_20'])
+# network_output = network_output.drop(columns = ['GEOID_TRACT_20'])
 print('The network output has missing values:')
 print(network_output.isnull().sum())
 
