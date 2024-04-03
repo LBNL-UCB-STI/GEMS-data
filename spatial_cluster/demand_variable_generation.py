@@ -193,12 +193,14 @@ print(sum(np.isinf(output_demand_attributes.loc[:, 'job_diversity'])))
 
 ### job sink magnitude and trip distance distribution
 
-od_attribute_exist = 1 # if 0, execute the data generation, if 1, load existing output
+## update April 01, 2024 --split bin 4 at 50 mile per Mona's request
+od_attribute_exist = 0 # if 0, execute the data generation, if 1, load existing output
 
 out_od_attributes = None # create empty data frame to hold generated attributes
 
-dist_bin = [-1, 1.3, 3, 8, 150, 5000] 
-dist_bin_label = ['jobs 0-1.3 miles', 'jobs 1.3-3 miles', 'jobs 3-8 miles', 'jobs >8 miles', 'remote jobs']
+dist_bin = [-1, 1.3, 3, 8, 50, 150, 5000] 
+dist_bin_label = ['jobs 0-1.3 miles', 'jobs 1.3-3 miles', 'jobs 3-8 miles', 
+                  'jobs 8-50 miles', 'jobs 50-150 miles', 'remote jobs']
 
 if od_attribute_exist == 0: # run heavy comutation to generate od attributes
     od_dist_by_tract = None  # create empty data frame to hold input data
@@ -219,7 +221,8 @@ if od_attribute_exist == 0: # run heavy comutation to generate od attributes
                                            aggfunc = "sum")
         od_data_by_dist = od_data_by_dist.reset_index()
         od_data_by_dist = od_data_by_dist.fillna(0)
-        od_data_by_dist.loc[:, 'total_emp'] = od_data_by_dist.loc[:, dist_bin_label].sum(axis = 1)
+        od_data_by_dist.loc[:, 'total_emp'] = \
+            od_data_by_dist.loc[:, dist_bin_label].sum(axis = 1)
         od_data_by_dist = od_data_by_dist.loc[od_data_by_dist['total_emp'] > 0 ] 
         # fraction only available to zones with non-zero jobs
         
@@ -264,14 +267,14 @@ if od_attribute_exist == 0: # run heavy comutation to generate od attributes
     out_od_attributes.loc[:, 'job_sink_mag'] = \
         out_od_attributes.loc[:, 'jobs_by_work'] / out_od_attributes.loc[:, 'jobs_by_home']
     
-    out_od_attributes.to_csv('Demand/CleanData/lehd_od_trip_characteristics.csv', index = False)
+    out_od_attributes.to_csv('Demand/CleanData/lehd_od_trip_characteristics_v2.csv', index = False)
 else: # load pre-generated data
-    out_od_attributes = read_csv('Demand/CleanData/lehd_od_trip_characteristics.csv')
+    out_od_attributes = read_csv('Demand/CleanData/lehd_od_trip_characteristics_v2.csv')
 
 # <codecell>
 # append OD characteristics to output metrics
 var_list = ['GEOID', 'jobs 0-1.3 miles', 'jobs 1.3-3 miles', 'jobs 3-8 miles',
-            'jobs >8 miles', 'remote jobs', 'job_sink_mag']
+            'jobs 8-50 miles', 'jobs 50-150 miles', 'remote jobs', 'job_sink_mag']
 out_od_attributes_short = out_od_attributes[var_list]
 
 output_demand_attributes = pd.merge(output_demand_attributes,
@@ -349,5 +352,7 @@ for var in var_list:
         print('total infinity values in ' + var)
         print(sum(np.isinf(output_demand_attributes.loc[:, var])))
 # <codecell>
-output_demand_attributes.to_csv('Demand/CleanData/microtype_inputs_demand.csv', index = False)
+
+# Log April 01, 2024 - generate V2 of the data after biennual review
+output_demand_attributes.to_csv('Demand/CleanData/microtype_inputs_demand_V2.csv', index = False)
 

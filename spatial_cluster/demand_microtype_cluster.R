@@ -7,6 +7,7 @@
 # XIAODAN XU & LING JIN
 # LAWRENCE BERKELEY NATIONAL LAB
 # Main File: FEB 5 2024
+# UPDATE April 01, 2024: update input data to reflect the changes in commute distance bins
 ##################################################
 # Load prep files
 # CODE DIRECTORY
@@ -31,7 +32,9 @@ boundarydir <- 'spatial_boundary/CleanData'
 ##########
 
 # demand microtype input
-FHWA_data <- fread(file.path(inputsdir,"microtype_inputs_demand.csv")) %>%
+
+# update April 01, 2024 - load V2 data to include one more distance bin 
+FHWA_data <- fread(file.path(inputsdir,"microtype_inputs_demand_V2.csv")) %>%
   mutate(tract = as.character(GEOID), census_urban_area = as.character(census_urban_area))
 
 # Crosswalk to CBSAs and counties
