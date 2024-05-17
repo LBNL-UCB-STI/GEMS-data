@@ -70,5 +70,5 @@ transit_fare_out = transit_fare_out.rename(columns = {'geoid': 'tractcode'})
 transit_fare_out.loc[:, 'tractcode'] = transit_fare_out.loc[:, 'tractcode'].astype(str).str.zfill(11)
 transit_fare_out.loc[:, 'countycode'] = transit_fare_out.loc[:, 'tractcode'].str[0:5]
 
-transit_fare_out.to_csv('Cost/CleanData/transit_fate_by_tract_2017.csv', index = False)
+transit_fare_out.to_csv('Cost/CleanData/transit_fare_by_tract_2017.csv', index = False)
 
