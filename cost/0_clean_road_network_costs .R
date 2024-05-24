@@ -1,9 +1,6 @@
 # Code to clean raw road network and lane dedication costs
 # merge with UACE and FHWA population classifications to assign tracts to cost groups
 
-# NATALIE POPOVICH
-# BERKELEY NATIONAL LAB
-# LAST UPDATED: MARCH 8 2021
 ####################################
 
 # set working directory and sub-directories
@@ -155,6 +152,9 @@ network_with_cost <- network %>%
          add_obsA = add_obsA * lanemiles,
          add_noobs = add_noobs * lanemiles) # calculate total cost per construct type
 
+network_bike_only <- network_with_cost %>% filter(f_sys %in% c(5, 6, 7))
+
+# all veh
 network_with_cost <- network_with_cost %>% 
   group_by(GEOID, cost_group) %>% 
   summarise(lanemiles = sum(lanemiles),
@@ -177,6 +177,29 @@ network_with_cost <- network_with_cost %>%
     cost_group == 6 ~ 'Large Urbanized', # Urban - Large Urbanized (500,000 < UA Population < 1 million)
     cost_group == 7 ~ 'major urbanized'))
 
+# bike only
+network_bike_only <- network_bike_only %>% 
+  group_by(GEOID, cost_group) %>% 
+  summarise(lanemiles = sum(lanemiles),
+            restripe = sum(restripe),
+            add_obsA = sum(add_obsA),
+            add_noobs = sum(add_noobs))
+
+network_bike_only <- network_bike_only %>%
+  mutate(restripe = restripe / lanemiles, 
+         add_obsA = add_obsA / lanemiles,
+         add_noobs = add_noobs / lanemiles) # lane mile weighted cost per mile
+
+network_bike_only <- network_bike_only %>%
+  mutate(region_type = case_when(
+    cost_group == 1 ~ 'Rural - Flat',  # Rural - Flat (rural from FHWA-adjusted urban definition and grade < 2% ) per HPMS field manual
+    cost_group == 2 ~ 'Rural - Rolling', # Rural - Rolling (rural and 2 < grade < 5)
+    cost_group == 3 ~ 'Rural - Mountainous', # Rural - Mountainous (rural and grade > 5)
+    cost_group == 4 ~ 'Small Urban', # Urban - X- Small Urban
+    cost_group == 5 ~ 'Small Urbanized', # Urban - Small Urbanized (50,000 < UA Population < 500,000)
+    cost_group == 6 ~ 'Large Urbanized', # Urban - Large Urbanized (500,000 < UA Population < 1 million)
+    cost_group == 7 ~ 'major urbanized'))
+
 ggplot(network_with_cost, aes(x=region_type, y=restripe)) + 
   geom_boxplot(fill="slateblue", alpha=0.2) + 
   xlab("region type") + ylab('lane dedication') # land dedication
@@ -190,3 +213,4 @@ ggplot(network_with_cost, aes(x=region_type, y=add_noobs)) +
   xlab("region type") + ylab('ROW construction (other)')# land dedication
 
 write.csv(network_with_cost,  file.path(datadir, "highway_cost_per_tract.csv"), row.names = F)
+write.csv(network_bike_only,  file.path(datadir, "bike_cost_per_tract.csv"), row.names = F)
