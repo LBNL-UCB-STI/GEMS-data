@@ -163,7 +163,7 @@ df <- capital_cost %>%
 df <- df %>% 
   distinct(NTD.ID, Mode, Mode.VOMS, City, total_cap_exp, Service.Area.Sq.Miles, veh_revenue_hours, .keep_all = T)
 # 2017 rows
-#write.csv(df, file.path(datadir,"transit_costs_merged_062723.csv"), row.names = F)
+write.csv(df, file.path(datadir,"transit_system_cost.csv"), row.names = F)
 
 
 

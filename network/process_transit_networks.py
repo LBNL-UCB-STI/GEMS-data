@@ -29,7 +29,7 @@ national_transit_route = gpd.read_file(route_file)
 
 # use 2018 boundary for mode choice estimation and 2020 for GEMS 2.0
 run_type_desc = {1: 'mode choice', 2: 'GEMS update'}
-run_type = 1
+run_type = 2
 if run_type == 1:
     ct_file = 'spatial_boundary/CleanData/combined_tracts_2018.geojson'
 else:
@@ -129,29 +129,29 @@ us_census_tract_df.loc[us_census_tract_df['rail_length_m'] > 0, 'rail_available'
 us_census_tract_df.loc[:, 'bus_available'] = 0
 us_census_tract_df.loc[us_census_tract_df['bus_length_m'] > 0, 'bus_available'] = 1
 
-us_census_tract_df.to_csv(os.path.join('Network', output_path, "transit_availability.csv"), index = False)
+us_census_tract_df.to_csv(os.path.join('Network', output_path, "transit_availability_2020.csv"), index = False)
 
 
 # <codecell>
 
 # compare with V1 
-v1_file = os.path.join('Network', data_path, 'NTAD', 'modeaccessbility.csv')
-mode_availability_v1 = read_csv(v1_file)
-us_census_tract_df['GEOID'] = us_census_tract_df['GEOID'].astype(str).str.zfill(11)
-mode_availability_v1['geoid'] = mode_availability_v1['geoid'].astype(str).str.zfill(11)
+# v1_file = os.path.join('Network', data_path, 'NTAD', 'modeaccessbility.csv')
+# mode_availability_v1 = read_csv(v1_file)
+# us_census_tract_df['GEOID'] = us_census_tract_df['GEOID'].astype(str).str.zfill(11)
+# mode_availability_v1['geoid'] = mode_availability_v1['geoid'].astype(str).str.zfill(11)
 
-us_census_tract_compare = pd.merge(us_census_tract_df, mode_availability_v1,
-                                   left_on = 'GEOID', right_on = 'geoid', how = 'left')
+# us_census_tract_compare = pd.merge(us_census_tract_df, mode_availability_v1,
+#                                    left_on = 'GEOID', right_on = 'geoid', how = 'left')
 
-print(us_census_tract_compare.head(5))
+# print(us_census_tract_compare.head(5))
 
-from sklearn.metrics import confusion_matrix
-rail_cross_tab = confusion_matrix( us_census_tract_compare['rail'], 
-                                  us_census_tract_compare['rail_available'])
-print(rail_cross_tab)
-bus_cross_tab = confusion_matrix( us_census_tract_compare['bus'],
-                                 us_census_tract_compare['bus_available'])
-print(bus_cross_tab)
+# from sklearn.metrics import confusion_matrix
+# rail_cross_tab = confusion_matrix( us_census_tract_compare['rail'], 
+#                                   us_census_tract_compare['rail_available'])
+# print(rail_cross_tab)
+# bus_cross_tab = confusion_matrix( us_census_tract_compare['bus'],
+#                                  us_census_tract_compare['bus_available'])
+# print(bus_cross_tab)
 
 # <codecell>
 
@@ -170,9 +170,9 @@ us_census_tract_centroid.loc[:, 'dist_to_rail_m'] = \
 
 # <codecell>
 us_census_tract_centroid.loc[:, 'dist_to_rail_m'] = us_census_tract_centroid.loc[:, 'dist_to_rail_m'].astype(float)
-# us_census_tract_centroid[:, 'dist_to_rail_mile'] = 0.000621371 * us_census_tract_centroid.loc[:, 'dist_to_rail_m']
+us_census_tract_centroid.loc[:, 'dist_to_rail_mile'] = 0.000621371 * us_census_tract_centroid.loc[:, 'dist_to_rail_m']
 us_census_tract_centroid_df = pd.DataFrame(us_census_tract_centroid.drop(columns='geometry'))
-us_census_tract_centroid_df.to_csv(os.path.join('Network', output_path, "transit_availability_with_dist.csv"), index = False)
+us_census_tract_centroid_df.to_csv(os.path.join('Network', output_path, "transit_availability_with_dist_2020.csv"), index = False)
 
     # calculate nearest dist to bus
 # national_bus_route = national_bus_route.to_crs("EPSG:3310")
