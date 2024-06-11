@@ -52,17 +52,17 @@ max(na.count/dim(FHWA_data)[1]) # max missing is about 0.5%
 export = as.data.frame(FHWA_data) %>%
   #filter(water == 0) %>%
   dplyr::select(c('pop_per_acre', 'jobs_per_acre', 'jobs_resident_bal', 'job_diversity', 
-  'jobs 0-1.3 miles', 'jobs 1.3-3 miles', 'jobs 3-8 miles', 'jobs >8 miles', 'remote jobs', 
+  'jobs 0-1.3 miles', 'jobs 1.3-3 miles', 'jobs 3-8 miles', 'jobs 8-50 miles', 'jobs 50-150 miles', 'remote jobs', 
   'job_sink_mag', 'Impervious Developed', 'Developed Open Space', 'census_urban_area', 'tract')) # remove identifiers 
 
 
 #better define column names
 colnames(export) <- c('pop_per_acre', 'jobs_per_acre', 'jobs_resident_bal', 'job_diversity', 
-                      'jobs_dist_bin1', 'jobs_dist_bin2', 'jobs_dist_bin3', 'jobs_dist_bin4', 'remote_jobs', 
+                      'jobs_dist_bin1', 'jobs_dist_bin2', 'jobs_dist_bin3', 'jobs_dist_bin4', 'jobs_dist_bin5','remote_jobs', 
                       'job_sink_mag', 'impervious_developed', 'developed_open_space', 'census_urban_area', 'tract')
 
 list_of_attr <- c('pop_per_acre', 'jobs_per_acre', 'jobs_resident_bal', 'job_diversity', 
-                  'jobs_dist_bin1', 'jobs_dist_bin2', 'jobs_dist_bin3', 'jobs_dist_bin4', 'remote_jobs', 
+                  'jobs_dist_bin1', 'jobs_dist_bin2', 'jobs_dist_bin3', 'jobs_dist_bin4', 'jobs_dist_bin5', 'remote_jobs', 
                   'job_sink_mag', 'impervious_developed', 'developed_open_space')
 
 # standardize numeric variables, center and scale them
@@ -73,7 +73,7 @@ for (i in 1:length(colnames(export))){
     export[, i] <- export[, i]
   }
 }
-write.csv(export, file.path(datadir, "microtypes_inputs_demand_scaled.csv"), row.names = F)
+write.csv(export, file.path(datadir, "microtypes_inputs_demand_scaled_V2.csv"), row.names = F)
 
 data_scaled <- imputeMissings(export)
 
@@ -187,7 +187,7 @@ ggsave(file = file.path(figuredir,'stage1_cluster_validity_urban.png'),
        height = 4, width = 6) 
 
 
-# urban clusters
+# rural clusters
 tic()
 reduced.res = NULL
 
@@ -412,7 +412,8 @@ FHWA_data <- FHWA_data %>%
   rename('jobs_dist_bin1'='jobs 0-1.3 miles', 
          'jobs_dist_bin2'="jobs 1.3-3 miles", 
          'jobs_dist_bin3'= "jobs 3-8 miles" , 
-         'jobs_dist_bin4'= "jobs >8 miles", 
+         'jobs_dist_bin4'= "jobs 8-50 miles", 
+         'jobs_dist_bin5'= "jobs 50-150 miles", 
          'impervious_developed'="Impervious Developed", 
          'developed_open_space'="Developed Open Space")
 

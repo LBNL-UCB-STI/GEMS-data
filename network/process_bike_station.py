@@ -24,13 +24,13 @@ national_bike_share = gpd.read_file(bike_share_file)
 
 
 run_type_desc = {1: 'mode choice', 2: 'GEMS update'}
-run_type = 1
+run_type = 2
 if run_type == 1:
     ct_file = 'spatial_boundary/CleanData/combined_tracts_2018.geojson'
     analysis_year = 2017
 else:
     ct_file = 'spatial_boundary/CleanData/combined_tracts_2020.geojson'
-    analysis_year = 2021
+    analysis_year = 2017
  
 national_bike_share_sel = national_bike_share.loc[national_bike_share['year'] == str(analysis_year)]
 print(len(national_bike_share_sel))
@@ -87,4 +87,7 @@ acs_population_with_bike.loc[criteria, density_var_pop_name] = \
 
 # write output
 acs_population_with_bike = acs_population_with_bike[['GEOID', density_var_area_name, density_var_pop_name]]
-acs_population_with_bike.to_csv(os.path.join('Network', output_path, 'bike_availability_' + str(analysis_year) + '.csv'), index = False)
+if run_type == 2:
+    acs_population_with_bike.to_csv(os.path.join('Network', output_path, 'bike_availability_' + str(analysis_year) + '.csv'), index = False)
+else:
+    acs_population_with_bike.to_csv(os.path.join('mode_choice_data_prep', 'input', 'bike_availability_' + str(analysis_year) + '.csv'), index = False)

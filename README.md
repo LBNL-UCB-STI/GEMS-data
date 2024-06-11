@@ -38,6 +38,20 @@ https://www2.census.gov/geo/docs/maps-data/data/rel2020/tract/tab20_tract20_trac
 * spatial_boundary/CleanData/combined_geotype_unit_{year}.geojson and csv
 * spatial_boundary/CleanData/cleaned_lodes8_crosswalk_with_ID.csv
 
+**step 3: Collecting Zip code, city, county and census tract crosswalk**
+
+**code**:[0_clean_boundaries.R](geography/zip_county_crosswalk_api.py)
+
+**Input**: queried HUD-USPS ZIP Code Crosswalk from API in Python;
+
+**process**:
+* load HUD-USPS ZIP Code Crosswalk
+* writing output if success or return the error message if fail
+
+**output**:
+* spatial_boundary/CleanData/ZIP_COUNTY_LOOKUP_2023.csv
+
+
 ## Theme B: Demograhic characteristics
 ### b1. Collecting ACS data at census tract level
 
@@ -152,8 +166,8 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 **output**:
 * Network/CleanData/OSMNX/*
 
-## Theme X: Spatial clustering
-### X1. Develop socio-economic microtype
+## Theme F: Spatial clustering
+### F1. Develop socio-economic microtype
 
 **step 1: compile demand attributes at census tract level**
 
@@ -172,7 +186,7 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 * Generate tract-level variables using 2020 census boundary and count number of missing values for each variable generated
 
 **output**:
-* Demand/CleanData/microtype_inputs_demand.csv
+* Demand/CleanData/microtype_inputs_demand_V2.csv
 
 **step 2: Develop and validate socio-economic microtype**
 
@@ -192,3 +206,125 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 **Output**:
 * Demand/Results/microtypes_inputs_demand_scaled.csv
 * Demand/Results/clustering_outputs_with_raw_data.csv
+
+### F2. Develop geotype
+
+**step 1: compile attributes at CBSA/county level**
+**code**: [geotype_variable_generation.py](spatial_cluster/geotype_variable_generation.py)
+
+**Input**: compile inputs from various themes, including:
+* load spatial boundary from Theme A: spatial_boundary/CleanData/combined_geotype_unit_{year}.geojson and csv AND spatial_boundary/CleanData/combined_tracts_{year}.geojson and csv AND 'spatial_boundary/CleanData/cleaned_lodes8_crosswalk_with_ID.csv'
+* load lehd wac data from Theme C: Demand/CleanData/wac_tract_{year}.csv AND Demand/CleanData/OD_distance/*
+* Load NLCD land use data from Theme D: Land_use/CleanData/processed_NLCD_data.csv
+* Load compiled network attributes: Network/CleanData/network_microtype_metrics.csv
+* Load socio-economic typology results: Demand/Results/clustering_outputs_with_raw_data.csv
+
+**Processes**:
+* Load all data sources needed for geotype clusters
+* Generate variables using 2020 census boundary and generate plots for each metric for checking
+
+**output**:
+* Demand/CleanData/geotype_inputs.csv
+
+## Theme G: Accessibility and mode availability
+
+### G1. processing bike density at census tract level
+
+**code**: [process_bike_station.py](network/process_bike_station.py)
+
+**Input**: 
+* load BTS NTAD data: Network/RawData/BTS/Locations of Docked Bikeshare Stations by System and Year_20240306.geojson 
+* load spatial boundary from Theme A: spatial_boundary/CleanData/combined_tracts_{year}.geojson and csv
+* load population data from Theme B: Demography/CleanData/acs_data_tracts_{date}.csv
+
+**Processes**:
+* load bike station shapefile from NTAD and select type of analysis (1-using 2010 boundary for mode choice; 2- use 2020 boundary for GEMS input)
+* intersect bike station with census tract boundary and calculate density
+
+**output**:
+* Network/CleanData/bike_availability_{year}.csv
+
+### G2. processing transit density at census tract level
+
+**code**: [process_transit_networks.py](network/process_transit_networks.py)
+
+**Input**: 
+* load BTS NTAD data: Network/RawData/NTAD/National_Transit_Map_Routes.geojson 
+* load spatial boundary from Theme A: spatial_boundary/CleanData/combined_tracts_{year}.geojson and csv
+
+
+**Processes**:
+* load transit shapefile from NTAD and select type of analysis (1-using 2010 boundary for mode choice; 2- use 2020 boundary for GEMS input)
+* intersect rail route with census tract boundary and calculate availability metrics
+* calculate distance between tract centroid to nearest rail line (the rail service only cross small numbers of trucks but is accessible to nearby riders directly or through connecting mode. This distance is used as supporting information on aproximity to rail service from each tract.)
+
+**output**:
+* Network/CleanData/transit_availability_with_dist_{year}.csv
+
+## Theme H: User cost
+
+### H1. processing transit fare at census tract level
+
+**code**: [clean_transit_fare.py](cost/clean_transit_fare.py)
+
+**Input**: 
+* load APTA transit fare data: Cost/RawData/BTS/2017-APTA-Fare-Database.xlsx # can transfer to use another year of input data as long as APTA data format stay the same 
+* load spatial crosswalk from Theme A: spatial_boundary/CleanData/ZIP_COUNTY_LOOKUP_2023.csv
+
+**Processes**:
+* Select fare from bus and rail service
+* assign transit fare to census tract using spatial crosswalk
+
+**output**:
+* 'Cost/CleanData/transit_fare_by_tract_{year}.csv'
+
+### H2. processing parking and ridehailing cost at census tract level
+
+**code**: [clean_parking_and_tnc_cost.py](cost/clean_parking_and_tnc_cost.py)
+
+**Input**: 
+* load Parkopedia data (after cleaning some typos in city name): Cost/RawData/parkopedia_cleaned_name.csv # created from 'parkopedia.xlsx' in the same directory 
+* load Uber fare data (after cleaning some typos in city name): Cost/RawData/Uber_fare_cleaned_name.csv # created from 'Uber_fare.csv' in the same directory 
+* load spatial crosswalk from Theme A: spatial_boundary/CleanData/ZIP_COUNTY_LOOKUP_2023.csv
+
+**Processes**:
+* Calculate hourly parking rate for each city
+* assign parking and ridehail cost to census tract using spatial crosswalk
+
+**output**:
+* 'Cost/CleanData/parking_tract_{year}.csv'
+* 'Cost/CleanData/uber_fare_tract_{year}.csv'
+
+## Theme  I: System cost
+
+### H1. processing transit system cost at county level
+
+**code**: [0_clean_transit_costs.R](cost/0_clean_transit_costs.R)
+
+**Input**: 
+* load 2018 NTD data: Cost/RawData/NTD/* # can transfer to use another year of input data as long as NTD data format stay the same 
+* load spatial crosswalk from Theme A: spatial_boundary/CleanData/ZIP_COUNTY_LOOKUP_2023.csv
+
+**Processes**:
+* Select agency, fleet, expanse and operation data from bus and rail service
+* assign transit attributes to county using spatial crosswalk
+
+**output**:
+* 'Cost/CleanData/transit_system_cost.csv'
+
+
+### H2. processing highway system cost at county level
+
+**code**: [0_clean_road_network_costs.R](cost/0_clean_road_network_costs.R)
+
+**Input**: 
+* load HERS data: Cost/RawData/G_01_AppA_H_TypUrbCapcCostsPerLM_A-8_2018-09-28+.xlsx
+* load urban area definition: spatial_boundary/CleanData/urban_divisions_2021.csv
+* load processed network data: Network/CleanData/network_microtype_metrics_2.csv
+
+**Processes**:
+* Assign cost groups to both HERS data and processed network data (at tract-level)
+* Calculate weighted highway system cost per tract using lane mile fraction by functional class and cost group at tract level
+
+**output**:
+* 'Cost/CleanData/highway_cost_per_tract.csv'

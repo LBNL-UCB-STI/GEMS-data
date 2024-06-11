@@ -21,7 +21,7 @@ set_path_to_census("~/Desktop/my_census_data")
 # census_api_key("e74b4d8c97989e07245040ac84168a638247af9a", overwrite = TRUE)
 # options(tigris_use_cache = TRUE)
 readRenviron("~/.Renviron")
-analysis_year = 2017
+analysis_year = 2021
 # 
 
 us <- unique(fips_codes$state)[1:51]
