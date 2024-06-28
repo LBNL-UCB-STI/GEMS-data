@@ -17,6 +17,7 @@ os.chdir('C:/FHWA_R2')
 
 path_to_typology = 'Network/CleanData/'
 path_to_demand = 'Demand/Results/'
+
 network_typology_cbsa_file = 'network_geotype_cbsa_clustered_exEdgeCount.csv'
 network_typology_noncbsa_file = 'network_geotype_non_cbsa_clustered_exEdgeCount.csv'
 partition_results_file = 'final_partition_results.csv'
@@ -28,8 +29,8 @@ path_to_crosswalk = 'spatial_boundary/CleanData/'
 census_tract_crosswalk_file = 'census_tract_crosswalk_2010_2020.csv'
 spatial_id_crosswalk_file = 'cleaned_lodes8_crosswalk_with_ID.csv'
 
-network_typology_cbsa = read_csv(os.path.join(path_to_typology, network_typology_cbsa_file))
-network_typology_noncbsa = read_csv(os.path.join(path_to_typology, network_typology_noncbsa_file))
+network_typology_cbsa = read_csv(os.path.join(path_to_typology, network_typology_cbsa_file), low_memory=False)
+network_typology_noncbsa = read_csv(os.path.join(path_to_typology, network_typology_noncbsa_file), low_memory=False)
 partition_results = read_csv(os.path.join(path_to_typology, partition_results_file))
 
 urban_geotype = read_csv(os.path.join(path_to_typology, urban_geotype_file))
@@ -110,7 +111,7 @@ geotype_combined = pd.concat([urban_geotype[output_attr],
 
 spatial_id_crosswalk = spatial_id_crosswalk[['spatial_id', 'trct']]
 
-geotype_combined = pd.merge(geotype_combined, spatial_id_crosswalk,
+geotype_combined = pd.merge(spatial_id_crosswalk, geotype_combined, 
                             on = 'spatial_id', how = 'left')
 
 geotype_combined = geotype_combined.rename(columns = {'trct':'GEOID'})
@@ -134,16 +135,46 @@ micro_geotype_combined = pd.merge(micro_geotype_combined, network_typology_outpu
 
 micro_geotype_combined.loc[micro_geotype_combined['spatial_id'] == 15005, 'geotype'] = 'County_1'
 print(len(micro_geotype_combined))
-micro_geotype_combined.to_csv(os.path.join(path_to_typology, 'microtype_geotype_output_2020.csv'),
+micro_geotype_combined.to_csv(os.path.join(path_to_typology, 'microtype_geotype_output_2020_unimputed.csv'),
                                index = False)
 
+# <codecell>
+# fill missing value
+micro_geotype_combined = micro_geotype_combined.sort_values('GEOID', ascending = True)
+print('total missing before imputation')
+print(micro_geotype_combined.isna().sum())
+
+#impute rural and urban respectively
+micro_geotype_combined_imputed = micro_geotype_combined.copy()
+micro_geotype_combined_imputed.loc[:, 'geotype'] = \
+    micro_geotype_combined_imputed.loc[:, 'geotype'].fillna(method = 'ffill')
+
+micro_geotype_urban_imputed = \
+    micro_geotype_combined_imputed.loc[micro_geotype_combined_imputed['geotype'].isin(['CBSA_1', 'CBSA_2'])]
+micro_geotype_urban_imputed = micro_geotype_urban_imputed.fillna(method = 'ffill')
+# micro_geotype_urban_imputed = micro_geotype_urban_imputed.fillna(method = 'bfill')
+micro_geotype_rural_imputed = \
+    micro_geotype_combined_imputed.loc[~micro_geotype_combined_imputed['geotype'].isin(['CBSA_1', 'CBSA_2'])]
+micro_geotype_rural_imputed = micro_geotype_rural_imputed.fillna(method = 'ffill')
+# micro_geotype_rural_imputed = micro_geotype_rural_imputed.fillna(method = 'bfill')
+micro_geotype_combined_imputed = pd.concat([micro_geotype_urban_imputed, micro_geotype_rural_imputed])
+# micro_geotype_combined_imputed = micro_geotype_combined.fillna(method = 'ffill')
+print('total missing after imputation')
+print(micro_geotype_combined_imputed.isna().sum())
+
+print('total length after imputation')
+print(len(micro_geotype_combined_imputed))
+
+micro_geotype_combined_imputed.to_csv(os.path.join(path_to_typology, 'microtype_geotype_output_2020.csv'),
+                               index = False)
+# <codecell>
 census_tract_crosswalk = census_tract_crosswalk[['GEOID_TRACT_20', 'GEOID_TRACT_10']]
 census_tract_crosswalk['GEOID_TRACT_20'] = \
     census_tract_crosswalk['GEOID_TRACT_20'].astype(str).str.zfill(11)
 census_tract_crosswalk['GEOID_TRACT_10'] = \
     census_tract_crosswalk['GEOID_TRACT_10'].astype(str).str.zfill(11)
     
-micro_geotype_combined_2010 = pd.merge(micro_geotype_combined, census_tract_crosswalk,
+micro_geotype_combined_2010 = pd.merge(micro_geotype_combined_imputed, census_tract_crosswalk,
                                        left_on = 'GEOID', right_on = 'GEOID_TRACT_20',
                                        how = 'left')
 print(len(micro_geotype_combined_2010))
