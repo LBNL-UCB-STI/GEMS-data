@@ -19,7 +19,7 @@ data_path = 'RawData'
 output_path = 'CleanData'
 
 run_type_desc = {1: 'mode choice', 2: 'GEMS update'}
-run_type = 1
+run_type = 2
 if run_type == 1:
     ct_file = 'spatial_boundary/CleanData/combined_tracts_2018.geojson'
     analysis_year = 2017
@@ -145,7 +145,8 @@ output_opportunities = output_opportunities.fillna(0)
 # <codecell>
 
 # save output before assigning parks
-output_dir = os.path.join('Opportunity', output_path, 'opportunities_and_jobs_no_parks.csv')
+output_dir = os.path.join('Opportunity', output_path, 
+                          'opportunities_and_jobs_no_parks_' + str(analysis_year) + '.csv')
 output_opportunities.to_csv(output_dir, index = False)
 # <codecell>
 
@@ -196,6 +197,7 @@ output_opportunities.loc[:, 'park_area_frac'] = \
     output_opportunities.loc[:, 'park_area'] / \
         output_opportunities.loc[:, 'ALAND']
 
-output_dir_2 = os.path.join('Opportunity', output_path, 'opportunities_and_jobs_parks.csv')
+output_dir_2 = os.path.join('Opportunity', output_path, 
+                            'opportunities_and_jobs_parks_' + str(analysis_year) + '.csv')
 output_opportunities.to_csv(output_dir_2, index = False)
 
