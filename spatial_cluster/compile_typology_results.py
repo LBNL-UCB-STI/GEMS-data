@@ -102,7 +102,7 @@ rural_geotype = rural_geotype[['spatial_id', geotype_rural_clusters]]
 urban_geotype.loc[:, 'geotype'] = 'CBSA_' + \
     urban_geotype.loc[:, geotype_urban_clusters].astype(str)
     
-rural_geotype.loc[:, 'geotype'] = 'County_' + \
+rural_geotype.loc[:, 'geotype'] = 'NONCBSA_' + \
     rural_geotype.loc[:, geotype_rural_clusters].astype(str)
 
 output_attr = ['spatial_id', 'geotype']
