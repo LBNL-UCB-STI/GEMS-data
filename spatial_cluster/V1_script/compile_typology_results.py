@@ -133,7 +133,7 @@ micro_geotype_combined = pd.merge(geotype_combined, demand_microtype,
 micro_geotype_combined = pd.merge(micro_geotype_combined, network_typology_output,
                                   on = 'GEOID', how = 'outer')
 
-micro_geotype_combined.loc[micro_geotype_combined['spatial_id'] == 15005, 'geotype'] = 'County_1'
+micro_geotype_combined.loc[micro_geotype_combined['spatial_id'] == 15005, 'geotype'] = 'NONCBSA_2'
 print(len(micro_geotype_combined))
 micro_geotype_combined.to_csv(os.path.join(path_to_typology, 'microtype_geotype_output_2020_unimputed.csv'),
                                index = False)
@@ -165,6 +165,12 @@ print(micro_geotype_combined_imputed.isna().sum())
 print('total length after imputation')
 print(len(micro_geotype_combined_imputed))
 
+partition_results_out = partition_results[['GEOID', 'unitedID']]
+partition_results_out['GEOID'] = partition_results_out['GEOID'].astype(str).str.zfill(11)
+micro_geotype_combined_imputed = pd.merge(micro_geotype_combined_imputed,
+                                          partition_results_out, 
+                                          on = 'GEOID', how = 'left')
+
 micro_geotype_combined_imputed.to_csv(os.path.join(path_to_typology, 'microtype_geotype_output_2020.csv'),
                                index = False)
 # <codecell>
@@ -184,7 +190,7 @@ micro_geotype_combined_2010 = \
 print(len(micro_geotype_combined_2010))
 
 micro_geotype_combined_2010 = micro_geotype_combined_2010[['GEOID_TRACT_10', 'geotype',
-                                                           'network_microtype', 'demand_microtype_comb']]
+                                                           'network_microtype', 'demand_microtype_comb', 'unitedID']]
 
 micro_geotype_combined_2010.to_csv(os.path.join(path_to_typology, 'microtype_geotype_output_2010.csv'),
                                index = False)
