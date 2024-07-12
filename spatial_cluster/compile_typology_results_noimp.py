@@ -50,12 +50,12 @@ geotype_rural_clusters = 'cluster2'
 
 # matching urban network typology to tract
 partition_ids = partition_results.unitedID.unique()
-
+print(len(partition_ids))
 network_typology_cbsa = network_typology_cbsa[['network_id', network_urban_clusters]]
 
 network_typology_cbsa_par = \
     network_typology_cbsa.loc[network_typology_cbsa['network_id'].isin(partition_ids)]
-
+print(len(network_typology_cbsa_par))
 network_typology_cbsa_nopar = \
     network_typology_cbsa.loc[~network_typology_cbsa['network_id'].isin(partition_ids)]  
 
