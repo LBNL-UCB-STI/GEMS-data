@@ -19,7 +19,7 @@ plt.style.use('ggplot')
 
 # load NHTS data with mode choice attributes (no location)
 NHTS_trips = pd.read_csv('output/NHTS_data_with_time_cost.csv')
-mode_choice_coeff = pd.read_csv('output/mode_choice_coefficients.csv')
+mode_choice_coeff = pd.read_csv('output/mode_choice_coefficients_anna.csv')
 # mode_choice_coeff = mode_choice_coeff.rename(columns ={'Mode': 'mode',
 #                                                        'Geotype': 'h_geotype',
 #                                                        'IncomeGroup': 'populationgroupid',
@@ -68,7 +68,7 @@ NHTS_trips_with_util.loc[:, 'utility'] = NHTS_trips_with_util.loc[:, 'Intercept'
     # NHTS_trips_with_util.loc[:, 'BikeShare_Bike'] * NHTS_trips_with_util.loc[:, 'density_pop']
 
 # Xiaodan's note -- this is a temporary drop, those variables will be fixed once we rerun mode choice data prep
-NHTS_trips_with_util = NHTS_trips_with_util.drop(columns = ['strttime', 'start_time_bin'])
+# NHTS_trips_with_util = NHTS_trips_with_util.drop(columns = ['strttime', 'start_time_bin'])
 NHTS_trips_with_util.to_csv('output/NHTS_data_with_utility.csv', index = False)
 
 # <codecell>
