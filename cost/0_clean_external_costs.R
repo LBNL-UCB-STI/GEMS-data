@@ -138,8 +138,9 @@ vmt_with_cost <- vmt_with_cost %>%
   filter(mode != "Motorcycles") %>% 
   mutate(Mode = case_when( #make sure modes are the same as Task 2 modes
     mode == "Buses" ~ 'bus',
-    mode %in% c("Light Trucks", "Passenger Cars") ~ 'hv', 
-    mode %in% c("Combination Trucks", "Single-Unit Trucks") ~ 'freight'))
+    mode %in% c("Light Trucks", "Passenger Cars") ~ 'auto', 
+    mode %in% c("Combination Trucks") ~ 'freight_combi',
+    mode %in% c("Single-Unit Trucks") ~ 'freight_single'))
 
 cost <- vmt_with_cost %>%
   group_by(tract, state, loc_type, Mode) %>%
