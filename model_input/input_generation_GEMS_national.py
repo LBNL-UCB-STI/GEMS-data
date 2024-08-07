@@ -442,3 +442,4 @@ for gt in unique_gt:
     
     lr_mode_results = pd.concat([lr_mode_results, bus_lr, rail_lr])
     # break
+lr_mode_results.to_csv(os.path.join(output_dir, "transit_cost_by_hour_geotype_lm.csv"), index = False)
