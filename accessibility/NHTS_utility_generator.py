@@ -30,10 +30,12 @@ NHTS_columns = NHTS_trips.columns
 # <codecell>
 # calculate mode availability
 NHTS_trips_subset = NHTS_trips.loc[NHTS_trips['mode'].isin(['rail', 'bus'])]
+NHTS_trips_subset.loc[:, 'weighted_PMT'] = \
+    NHTS_trips_subset.loc[:, 'wtperfin'] * NHTS_trips_subset.loc[:, 'trpmiles']
 mode_availability = \
 NHTS_trips_subset.groupby(['o_geotype','o_network_microtype',
                            'd_geotype', 'd_network_microtype', 
-                           'mode', 'mode_available'])[['wtperfin']].sum()
+                           'mode', 'mode_available'])[['wtperfin', 'weighted_PMT']].sum()
 mode_availability = mode_availability.reset_index()
 mode_availability = mode_availability.rename(columns = {'wtperfin': 'weighted_trips'})
 mode_availability.to_csv('output/gems/mode_availability_input.csv')
