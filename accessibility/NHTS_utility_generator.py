@@ -19,7 +19,7 @@ plt.style.use('ggplot')
 
 # load NHTS data with mode choice attributes (no location)
 NHTS_trips = pd.read_csv('output/NHTS_data_with_time_cost.csv')
-mode_choice_coeff = pd.read_csv('output/mode_choice_coefficients_anna.csv')
+mode_choice_coeff = pd.read_csv('output/mode_choice_coefficients_v2.csv')
 # mode_choice_coeff = mode_choice_coeff.rename(columns ={'Mode': 'mode',
 #                                                        'Geotype': 'h_geotype',
 #                                                        'IncomeGroup': 'populationgroupid',
@@ -51,6 +51,16 @@ pop_group_mapping = {
     'HighIncNoVeh': 'HighIncNoVeh',
     'HighIncNoVehSenior': 'HighIncNoVeh'
     }
+
+# trip_purp_mapping = {'social': 'social',
+#                      'home': 'home',
+#                      'work': 'work',
+#                      'shopping': 'shopping_meals',
+#                      'transp_someone': 'other',
+#                      'medical': 'medical',
+#                      'meals': 'shopping_meals',
+#                      'school': 'school',
+#                      'other': 'other'}
 # pre-processing and data checking
 available_mode = NHTS_trips['mode'].unique()
 available_user_class = NHTS_trips['populationgroupid'].unique()
@@ -59,7 +69,15 @@ NHTS_trips.loc[NHTS_trips['mode'] == 'taxi', 'mode'] = 'ridehail'
 
 NHTS_trips.loc[:, 'populationgroupid'] = \
     NHTS_trips.loc[:, 'populationgroupid'].map(pop_group_mapping)
-
+    
+NHTS_trips.loc[:, 'short_dist_dummy'] = 0
+NHTS_trips.loc[:, 'long_dist_dummy'] = 1
+#based on mode choice model spec
+short_bins = ['dist_under_1',  'dist_1-2']
+NHTS_trips.loc[NHTS_trips['trip_dist_bin'].isin(short_bins), 'short_dist_dummy'] = 1
+NHTS_trips.loc[NHTS_trips['trip_dist_bin'].isin(short_bins), 'long_dist_dummy'] = 0
+# NHTS_trips.loc[:, 'trip_purpose_agg'] = \
+#     NHTS_trips.loc[:, 'trip_purpose'].map(trip_purp_mapping)
 # <codecell>
 
 NHTS_trips_with_util = pd.merge(NHTS_trips, mode_choice_coeff,
@@ -76,7 +94,10 @@ print(len(NHTS_trips_with_util))
 
 # apply mode choice utility function
 NHTS_trips_with_util.loc[:, 'utility'] = NHTS_trips_with_util.loc[:, 'Intercept'] + \
-    NHTS_trips_with_util.loc[:, 'BetaTravelTime'] * NHTS_trips_with_util.loc[:, 'travel_time'] + \
+    NHTS_trips_with_util.loc[:, 'BetaTravelTimeDistBin1Bin2'] * \
+        NHTS_trips_with_util.loc[:, 'travel_time'] * NHTS_trips_with_util.loc[:, 'short_dist_dummy'] + \
+    NHTS_trips_with_util.loc[:, 'BetaTravelTimeDistBin3Plus'] * \
+        NHTS_trips_with_util.loc[:, 'travel_time'] * NHTS_trips_with_util.loc[:, 'long_dist_dummy'] + \
     NHTS_trips_with_util.loc[:, 'BetaMonetaryCost'] * NHTS_trips_with_util.loc[:, 'cost']
     # NHTS_trips_with_util.loc[:, 'BikeShare_Bike'] * NHTS_trips_with_util.loc[:, 'density_pop']
 
