@@ -18,7 +18,7 @@ os.chdir('C:/FHWA_R2/mode_choice_and_demand_generation')
 plt.style.use('ggplot')
 
 # load NHTS data with mode choice attributes (no location)
-NHTS_trips = pd.read_csv('output/NHTS_data_with_time_cost.csv')
+NHTS_trips = pd.read_csv('output/NHTS_data_with_time_cost_3by5.csv')
 mode_choice_coeff = pd.read_csv('output/mode_choice_coefficients_v2.csv')
 # mode_choice_coeff = mode_choice_coeff.rename(columns ={'Mode': 'mode',
 #                                                        'Geotype': 'h_geotype',
@@ -38,7 +38,7 @@ NHTS_trips_subset.groupby(['o_geotype','o_network_microtype',
                            'mode', 'mode_available'])[['wtperfin', 'weighted_PMT']].sum()
 mode_availability = mode_availability.reset_index()
 mode_availability = mode_availability.rename(columns = {'wtperfin': 'weighted_trips'})
-mode_availability.to_csv('output/gems/mode_availability_input.csv')
+mode_availability.to_csv('output/gems/mode_availability_input_3by5.csv')
 
 # <codecell>
 pop_group_mapping = {
@@ -103,9 +103,9 @@ NHTS_trips_with_util.loc[:, 'utility'] = NHTS_trips_with_util.loc[:, 'Intercept'
 
 # Xiaodan's note -- this is a temporary drop, those variables will be fixed once we rerun mode choice data prep
 # NHTS_trips_with_util = NHTS_trips_with_util.drop(columns = ['strttime', 'start_time_bin'])
-NHTS_trips_with_util.to_csv('output/NHTS_data_with_utility.csv', index = False)
+NHTS_trips_with_util.to_csv('output/NHTS_data_with_utility_3by5.csv', index = False)
 
 # <codecell>
 NHTS_trips_with_util = NHTS_trips_with_util.sort_values(by = ['houseid', 'person_id', 'tdtrpnum'])
 sample_trip_with_util = NHTS_trips_with_util.head(12000)
-sample_trip_with_util.to_csv('output/sample_data_with_utility.csv', index = False)
+sample_trip_with_util.to_csv('output/sample_data_with_utility_3by5.csv', index = False)

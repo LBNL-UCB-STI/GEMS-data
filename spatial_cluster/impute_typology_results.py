@@ -25,9 +25,11 @@ census_tract_crosswalk_file = 'census_tract_crosswalk_2010_2020.csv'
 spatial_id_crosswalk_file = 'cleaned_lodes8_crosswalk_with_ID.csv'
 spatial_id_crosswalk_2010_file = 'us_xwalk_tract_2017_withID.csv'
 
-typology_unimputed_2020_file = 'microtype_geotype_output_2020_noimp_V1.csv'
-typology_unimputed_2010_file = 'microtype_geotype_output_2010_noimp_V1.csv'
+typology_unimputed_2020_file = 'microtype_geotype_output_2020_noimp.csv'
+typology_unimputed_2010_file = 'microtype_geotype_output_2010_noimp.csv'
 #partition_results_file = 'final_partition_results.csv'
+
+v1_typology_output = 'ccst_geoid_key_tranps_geo_with_imputation.csv'
 
 census_tract_crosswalk = read_csv(os.path.join(path_to_crosswalk, census_tract_crosswalk_file))
 spatial_id_crosswalk = read_csv(os.path.join(path_to_crosswalk, spatial_id_crosswalk_file))
@@ -36,7 +38,7 @@ spatial_id_crosswalk_2010 = read_csv(os.path.join(path_to_crosswalk, spatial_id_
 typology_unimputed_2020 = read_csv(os.path.join(path_to_typology, typology_unimputed_2020_file))
 typology_unimputed_2010 = read_csv(os.path.join(path_to_typology, typology_unimputed_2010_file))
 
-
+typology_v1 = read_csv(os.path.join(path_to_typology, v1_typology_output))
 #partition_results = read_csv(os.path.join(path_to_typology, partition_results_file))
 # spatial_id_crosswalk = spatial_id_crosswalk[['spatial_id', 'trct']]
 
@@ -93,14 +95,18 @@ micro_geotype_combined_imputed.to_csv(os.path.join(path_to_typology, 'microtype_
 # <codecell>
 # impute 2010 assignment
 census_tract_2010 = spatial_id_crosswalk_2010[['tract', 'spatial_id']]
+
 census_tract_2010 = census_tract_2010.drop_duplicates(subset = 'tract', keep = 'first')
+
 census_tract_2010['tract'] = \
     census_tract_2010['tract'].astype(str).str.zfill(11)
+
 typology_unimputed_2010['GEOID_TRACT_10'] = \
     typology_unimputed_2010['GEOID_TRACT_10'].astype(str).str.zfill(11)    
 micro_geotype_combined_2010 = pd.merge(census_tract_2010, typology_unimputed_2010,
                                        left_on = 'tract', right_on = 'GEOID_TRACT_10',
                                        how = 'left')
+
 print(len(micro_geotype_combined_2010))
 micro_geotype_combined_2010 = micro_geotype_combined_2010.rename(columns = {'tract': 'GEOID'})
 typology_unimputed_2010 = micro_geotype_combined_2010.sort_values('GEOID', ascending = True)
@@ -129,13 +135,22 @@ print('total length after imputation')
 print(len(micro_geotype_2010_imputed))
 # <codecell>      
 
-# APPEND PARTITION TO 2010
+# APPEND OLD TYPOLOGY WITH 2010 BOUNDARY
+
+typology_v1_sel = typology_v1[['GEOID', 'st_code', 'cbsa', 'cbsaname', 
+'geotype', 'microtype']]
+
+typology_v1_sel = typology_v1_sel.rename(columns = {'geotype': 'geotype_V1', 
+                                                    'microtype': 'microtype_V1'})
+typology_v1_sel = typology_v1_sel.drop_duplicates(subset = 'GEOID', keep = 'first')
+typology_v1_sel['GEOID'] = \
+    typology_v1_sel['GEOID'].astype(str).str.zfill(11)
 #partition_results_out = partition_results_out
-census_tract_crosswalk = census_tract_crosswalk[['GEOID_TRACT_20', 'GEOID_TRACT_10']]
-census_tract_crosswalk['GEOID_TRACT_20'] = \
-    census_tract_crosswalk['GEOID_TRACT_20'].astype(str).str.zfill(11)
-census_tract_crosswalk['GEOID_TRACT_10'] = \
-    census_tract_crosswalk['GEOID_TRACT_10'].astype(str).str.zfill(11)
+# census_tract_crosswalk = census_tract_crosswalk[['GEOID_TRACT_20', 'GEOID_TRACT_10']]
+# census_tract_crosswalk['GEOID_TRACT_20'] = \
+#     census_tract_crosswalk['GEOID_TRACT_20'].astype(str).str.zfill(11)
+# census_tract_crosswalk['GEOID_TRACT_10'] = \
+#     census_tract_crosswalk['GEOID_TRACT_10'].astype(str).str.zfill(11)
     
 # partition_results_out_2010 = pd.merge(partition_results_out, census_tract_crosswalk,
 #                                        left_on = 'GEOID', right_on = 'GEOID_TRACT_20',
@@ -156,5 +171,7 @@ census_tract_crosswalk['GEOID_TRACT_10'] = \
 micro_geotype_2010_imputed = micro_geotype_2010_imputed[['GEOID', 'geotype',
                                                            'network_microtype', 'demand_microtype_comb']]
 
+micro_geotype_2010_imputed = pd.merge(micro_geotype_2010_imputed, typology_v1_sel,
+                                      on = 'GEOID', how = 'left')
 micro_geotype_2010_imputed.to_csv(os.path.join(path_to_typology, 'microtype_geotype_output_2010.csv'),
                                index = False)         

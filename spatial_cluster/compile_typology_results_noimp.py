@@ -18,8 +18,8 @@ os.chdir('C:/FHWA_R2')
 
 path_to_typology = 'Network/CleanData/'
 path_to_demand = 'Demand/Results/'
-network_typology_cbsa_file = 'network_geotype_cbsa_clustered_scaled_data_exEdgeCount_byTracts.csv'
-network_typology_noncbsa_file = 'network_geotype_non_cbsa_clustered_scaled_data_exEdgeCount_byTracts.csv'
+network_typology_file = 'network_geotype_ALL_clustered_scaled_data_exEdgeCount_byTracts_IntersectionPerStreet.csv'
+# network_typology_noncbsa_file = 'network_geotype_non_cbsa_clustered_scaled_data_exEdgeCount_byTracts_IntersectionPerStreet.csv'
 # partition_results_file = 'final_partition_results.csv'
 urban_geotype_file = 'Geotype_Urban_Clusters_k2_4_pam.csv'
 rural_geotype_file = 'Geotype_Rural_Clusters_k2_4_pam.csv'
@@ -29,8 +29,11 @@ path_to_crosswalk = 'spatial_boundary/CleanData/'
 census_tract_crosswalk_file = 'census_tract_crosswalk_2010_2020.csv'
 spatial_id_crosswalk_file = 'cleaned_lodes8_crosswalk_with_ID.csv'
 
-network_typology_cbsa = read_csv(os.path.join(path_to_typology, network_typology_cbsa_file))
-network_typology_noncbsa = read_csv(os.path.join(path_to_typology, network_typology_noncbsa_file))
+network_typology = read_csv(os.path.join(path_to_typology, network_typology_file))
+
+network_typology_cbsa = network_typology.loc[network_typology['is_cbsa']== 1]
+network_typology_noncbsa = network_typology.loc[network_typology['is_cbsa']== 0]
+#network_typology_noncbsa = read_csv(os.path.join(path_to_typology, network_typology_noncbsa_file))
 # partition_results = read_csv(os.path.join(path_to_typology, partition_results_file))
 
 urban_geotype = read_csv(os.path.join(path_to_typology, urban_geotype_file))
@@ -41,7 +44,7 @@ demand_microtype = read_csv(os.path.join(path_to_demand, demand_microtype_file))
 census_tract_crosswalk = read_csv(os.path.join(path_to_crosswalk, census_tract_crosswalk_file))
 spatial_id_crosswalk = read_csv(os.path.join(path_to_crosswalk, spatial_id_crosswalk_file))
 
-network_urban_clusters = 'cluster4'
+network_urban_clusters = 'cluster5'
 network_rural_clusters = 'cluster3'
 
 geotype_urban_clusters = 'cluster2'
@@ -81,10 +84,10 @@ network_typology_noncbsa = network_typology_noncbsa.rename(columns = {'tract': '
 network_typology_cbsa = network_typology_cbsa.rename(columns = {'tract': 'GEOID'})
 
 network_typology_cbsa.loc[:, 'network_microtype'] = 'Urban_' + \
-    network_typology_cbsa.loc[:, network_urban_clusters].astype(str)
+    network_typology_cbsa.loc[:, network_urban_clusters].astype(int).astype(str)
 
 network_typology_noncbsa.loc[:, 'network_microtype'] = 'Rural_' + \
-    network_typology_noncbsa.loc[:, network_rural_clusters].astype(str)
+    network_typology_noncbsa.loc[:, network_rural_clusters].astype(int).astype(str)
 
 output_attr = ['GEOID', 'network_microtype']
 network_typology_output = pd.concat([network_typology_cbsa[output_attr],
@@ -167,8 +170,8 @@ micro_geotype_combined_2010 = micro_geotype_combined_2010[['GEOID_TRACT_10', 'ge
 # micro_geotype_combined_2010.loc[micro_geotype_combined_2010['geotype'] == 'County_1', 'geotype'] = 'NONCBSA_1'
 # micro_geotype_combined_2010.loc[micro_geotype_combined_2010['geotype'] == 'County_2', 'geotype'] = 'NONCBSA_2'
 
-micro_geotype_combined.to_csv(os.path.join(path_to_typology, 'microtype_geotype_output_2020_noimp_V1.csv'),
+micro_geotype_combined.to_csv(os.path.join(path_to_typology, 'microtype_geotype_output_2020_noimp.csv'),
                                index = False)
 
-micro_geotype_combined_2010.to_csv(os.path.join(path_to_typology, 'microtype_geotype_output_2010_noimp_V1.csv'),
+micro_geotype_combined_2010.to_csv(os.path.join(path_to_typology, 'microtype_geotype_output_2010_noimp.csv'),
                                index = False)
