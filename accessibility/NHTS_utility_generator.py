@@ -33,12 +33,39 @@ NHTS_trips_subset = NHTS_trips.loc[NHTS_trips['mode'].isin(['rail', 'bus'])]
 NHTS_trips_subset.loc[:, 'weighted_PMT'] = \
     NHTS_trips_subset.loc[:, 'wtperfin'] * NHTS_trips_subset.loc[:, 'trpmiles']
 mode_availability = \
-NHTS_trips_subset.groupby(['o_geotype','o_network_microtype',
-                           'd_geotype', 'd_network_microtype', 
-                           'mode', 'mode_available'])[['wtperfin', 'weighted_PMT']].sum()
+pd.pivot_table(NHTS_trips_subset, 
+               index = ['houseid', 'person_id', 'tdtrpnum', 'o_geotype','o_network_microtype',
+                           'd_geotype', 'd_network_microtype','trip_dist_bin', 'wtperfin'],
+               columns = 'mode', values = 'mode_available')
 mode_availability = mode_availability.reset_index()
-mode_availability = mode_availability.rename(columns = {'wtperfin': 'weighted_trips'})
-mode_availability.to_csv('output/gems/mode_availability_input_3by5.csv')
+mode_availability.loc[:,'TransitLayer'] = 'bus_rail'
+idx_bus_norail = (mode_availability['bus'] == 1) & (mode_availability['rail'] == 0)
+idx_nobus_norail = (mode_availability['bus'] == 0) & (mode_availability['rail'] == 0)
+idx_nobus_rail = (mode_availability['bus'] == 0) & (mode_availability['rail'] == 1)
+mode_availability.loc[idx_bus_norail,'TransitLayer'] = 'bus_norail'
+mode_availability.loc[idx_nobus_norail,'TransitLayer'] = 'nobus_norail'
+mode_availability.loc[idx_nobus_rail,'TransitLayer'] = 'nobus_rail'
+
+dist_bin_mapping = {'dist_under_1':'bin1', 
+                  'dist_1-2':'bin2', 
+                  'dist_2-4':'bin3', 
+                  'dist_4-8':'bin4', 
+                  'dist_8-15': 'bin5', 
+                  'dist_15-20': 'bin6', 
+                  'dist_20-35': 'bin7', 
+                  'dist_above_35': 'bin8'}
+mode_availability.loc[:, 'DistanceBinID'] = \
+    mode_availability.loc[:, 'trip_dist_bin'].map(dist_bin_mapping)
+
+mode_availability_out = \
+    mode_availability.groupby(['o_geotype','o_network_microtype',
+                'd_geotype', 'd_network_microtype', 'DistanceBinID', 'TransitLayer'])[['wtperfin']].sum()
+mode_availability_out.loc[:, 'Portion'] = \
+    mode_availability_out.loc[:, 'wtperfin']/ \
+        mode_availability_out.groupby(['o_geotype','o_network_microtype',
+                    'd_geotype', 'd_network_microtype', 'DistanceBinID'])['wtperfin'].transform('sum')
+mode_availability_out = mode_availability_out.rename(columns = {'wtperfin': 'weighted_trips'})
+mode_availability_out.to_csv('output/gems/mode_availability.csv')
 
 # <codecell>
 pop_group_mapping = {
