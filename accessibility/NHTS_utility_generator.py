@@ -65,7 +65,7 @@ mode_availability_out.loc[:, 'Portion'] = \
         mode_availability_out.groupby(['o_geotype','o_network_microtype',
                     'd_geotype', 'd_network_microtype', 'DistanceBinID'])['wtperfin'].transform('sum')
 mode_availability_out = mode_availability_out.rename(columns = {'wtperfin': 'weighted_trips'})
-mode_availability_out.to_csv('output/gems/mode_availability.csv')
+mode_availability_out.to_csv('output/gems/ModeAvailability.csv')
 
 # <codecell>
 pop_group_mapping = {
