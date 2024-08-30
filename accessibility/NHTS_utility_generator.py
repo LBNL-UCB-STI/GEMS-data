@@ -125,9 +125,9 @@ NHTS_trips_with_util.loc[:, 'utility'] = NHTS_trips_with_util.loc[:, 'Intercept'
         NHTS_trips_with_util.loc[:, 'travel_time'] * NHTS_trips_with_util.loc[:, 'short_dist_dummy'] + \
     NHTS_trips_with_util.loc[:, 'BetaTravelTimeDistBin3Plus'] * \
         NHTS_trips_with_util.loc[:, 'travel_time'] * NHTS_trips_with_util.loc[:, 'long_dist_dummy'] + \
-    NHTS_trips_with_util.loc[:, 'BetaTravelTimeDistBin1Bin2'] * \
+    NHTS_trips_with_util.loc[:, 'BetaMonetaryCostDistBin1Bin2'] * \
         NHTS_trips_with_util.loc[:, 'cost'] * NHTS_trips_with_util.loc[:, 'short_dist_dummy'] + \
-    NHTS_trips_with_util.loc[:, 'BetaTravelTimeDistBin3Plus'] * \
+    NHTS_trips_with_util.loc[:, 'BetaMonetaryCostDistBin3Plus'] * \
         NHTS_trips_with_util.loc[:, 'cost'] * NHTS_trips_with_util.loc[:, 'long_dist_dummy']        
     # NHTS_trips_with_util.loc[:, 'BikeShare_Bike'] * NHTS_trips_with_util.loc[:, 'density_pop']
 
