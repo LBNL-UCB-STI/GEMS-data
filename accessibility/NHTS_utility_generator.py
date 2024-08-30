@@ -19,7 +19,7 @@ plt.style.use('ggplot')
 
 # load NHTS data with mode choice attributes (no location)
 NHTS_trips = pd.read_csv('output/NHTS_data_with_time_cost_3by5.csv')
-mode_choice_coeff = pd.read_csv('output/mode_choice_coefficients_v2.csv')
+mode_choice_coeff = pd.read_csv('output/mode_choice_coefficients_implc_v2.csv')
 # mode_choice_coeff = mode_choice_coeff.rename(columns ={'Mode': 'mode',
 #                                                        'Geotype': 'h_geotype',
 #                                                        'IncomeGroup': 'populationgroupid',
@@ -125,7 +125,10 @@ NHTS_trips_with_util.loc[:, 'utility'] = NHTS_trips_with_util.loc[:, 'Intercept'
         NHTS_trips_with_util.loc[:, 'travel_time'] * NHTS_trips_with_util.loc[:, 'short_dist_dummy'] + \
     NHTS_trips_with_util.loc[:, 'BetaTravelTimeDistBin3Plus'] * \
         NHTS_trips_with_util.loc[:, 'travel_time'] * NHTS_trips_with_util.loc[:, 'long_dist_dummy'] + \
-    NHTS_trips_with_util.loc[:, 'BetaMonetaryCost'] * NHTS_trips_with_util.loc[:, 'cost']
+    NHTS_trips_with_util.loc[:, 'BetaTravelTimeDistBin1Bin2'] * \
+        NHTS_trips_with_util.loc[:, 'cost'] * NHTS_trips_with_util.loc[:, 'short_dist_dummy'] + \
+    NHTS_trips_with_util.loc[:, 'BetaTravelTimeDistBin3Plus'] * \
+        NHTS_trips_with_util.loc[:, 'cost'] * NHTS_trips_with_util.loc[:, 'long_dist_dummy']        
     # NHTS_trips_with_util.loc[:, 'BikeShare_Bike'] * NHTS_trips_with_util.loc[:, 'density_pop']
 
 # Xiaodan's note -- this is a temporary drop, those variables will be fixed once we rerun mode choice data prep
