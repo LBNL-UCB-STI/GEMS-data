@@ -520,6 +520,37 @@ mode_speed.rename(columns = {'o_geotype': 'geotype',
 
 mode_speed.to_csv(os.path.join(output_dir, "calibration/mode_speed.csv"), index = False)
 
+
+mode_split = \
+    trips.groupby(['o_geotype', 'o_network_microtype', 'mode'])[['wtperfin']].sum()
+mode_split = mode_split.reset_index()
+mode_split = mode_split.loc[mode_split['mode'] != 'ridehail']
+mode_split.loc[:, 'fraction'] = \
+    mode_split.loc[:, 'wtperfin']/ \
+        mode_split.groupby(['o_geotype', 'o_network_microtype'])['wtperfin'].transform('sum')
+mode_split.drop(columns = ['wtperfin'], inplace = True)
+mode_split.to_csv(os.path.join(output_dir, "calibration/NHTS_mode_split.csv"), index = False) 
+
+trips.loc[:, 'weighted_total_time_hr'] = \
+    trips.loc[:, 'wtperfin'] * trips.loc[:, ['access_time', 'wait_time', 'inv_time']].sum(axis = 1) / 60 # in hr
+
+trips.loc[:, 'weighted_dist_mi'] = \
+    trips.loc[:, 'wtperfin'] * trips.loc[:, 'trpmiles']
+
+trip_travel_time = \
+    trips.groupby(['o_geotype', 
+                   'o_network_microtype', 
+                   'mode'])[['weighted_total_time_hr', 
+                             'weighted_dist_mi', 'wtperfin']].sum()
+trip_travel_time = trip_travel_time.reset_index()
+trip_travel_time.loc[:, 'trip_travel_time (h)'] = \
+    trip_travel_time.loc[:, 'weighted_total_time_hr']/trip_travel_time.loc[:, 'wtperfin']
+trip_travel_time.loc[:, 'trip_length (mile)'] = \
+    trip_travel_time.loc[:, 'weighted_dist_mi']/trip_travel_time.loc[:, 'wtperfin']
+trip_travel_time.loc[:, 'avg_speed (mph)'] = \
+    trip_travel_time.loc[:, 'weighted_dist_mi']/trip_travel_time.loc[:, 'weighted_total_time_hr']
+trip_travel_time.rename(columns = {'wtperfin': 'trip_count'}, inplace = True)
+trip_travel_time.to_csv(os.path.join(output_dir, "calibration/NHTS_trip_travel_time.csv"), index = False) 
 # <codecell>
 
 # mode user cost generation
