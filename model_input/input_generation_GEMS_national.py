@@ -532,7 +532,7 @@ mode_split.drop(columns = ['wtperfin'], inplace = True)
 mode_split.to_csv(os.path.join(output_dir, "calibration/NHTS_mode_split.csv"), index = False) 
 
 trips.loc[:, 'weighted_total_time_hr'] = \
-    trips.loc[:, 'wtperfin'] * trips.loc[:, ['access_time', 'wait_time', 'inv_time']].sum(axis = 1) / 60 # in hr
+    trips.loc[:, 'wtperfin'] * trips.loc[:, 'inv_time'] / 60 # in hr
 
 trips.loc[:, 'weighted_dist_mi'] = \
     trips.loc[:, 'wtperfin'] * trips.loc[:, 'trpmiles']
@@ -555,6 +555,11 @@ trip_travel_time.to_csv(os.path.join(output_dir, "calibration/NHTS_trip_travel_t
 
 # mode user cost generation
 
+# load parking duration
+parking_duration = pd.read_csv(os.path.join(input_dir, 'Cost', 'parking_duration.csv'))
+parking_duration.rename(columns = {'d_geotype':'geotype',
+                                   'd_microtype':'network_microtype'}, inplace = True)
+
 parking_user_cost_with_typology = pd.merge(label_2020, parking_user_cost,
                                            left_on = 'GEOID', right_on = 'tractcode', 
                                             how = 'left')
@@ -562,6 +567,10 @@ parking_user_cost_with_typology.loc[:, 'parking'].fillna(0, inplace = True)
 parking_cost_agg = \
     parking_user_cost_with_typology.groupby(['geotype', 'network_microtype'])[['parking']].mean()
 parking_cost_agg = parking_cost_agg.reset_index()
+parking_cost_agg = pd.merge(parking_cost_agg, parking_duration,
+                            on = ['geotype', 'network_microtype'], 
+                            how = 'left')
+parking_cost_agg.loc[:, 'parking'] *= parking_cost_agg.loc[:, 'parking_duration'] 
 parking_cost_agg.rename(columns = {'parking': 'PerEndCost'}, inplace = True)
 
 driving_user_cost.drop(columns = ['Unnamed: 0', 'mode', 'total_auto_cost',
