@@ -84,7 +84,9 @@ highway_cost_group = read_csv(os.path.join(input_dir, 'Cost', 'cost_groups_07032
 bike_system_cost = read_csv(os.path.join(input_dir, 'Cost', 'bike_cost_per_tract.csv'))
 ### transit system cost by tract ####
 transit_system_cost = read_csv(os.path.join(input_dir, 'Cost', 'transit_system_cost.csv'))
-
+print('total transit mileage:')
+print(transit_system_cost[['veh_revenue_hours',
+'veh_revenue_miles', 'Directional.Route.Miles']].sum())
 ### user cost by tract ####
 driving_user_cost = read_csv(os.path.join(input_dir, 'Cost', 'auto_cost.csv'))
 parking_user_cost = read_csv(os.path.join(input_dir, 'Cost', 'parking_tract_2017.csv'))
@@ -692,6 +694,11 @@ population_fraction.rename(columns = {'h_geotype': 'geotype',
                                       'h_network_microtype': 'network_microtype',
                                       'Population': 'PopulationMicrotypeID'}, inplace = True)
 
+# <codecell>
+print('total mileage before assignment:')
+print(transit_system_cost_with_typology[['veh_revenue_hours',
+'veh_revenue_miles', 'Directional.Route.Miles']].sum())
+
 transit_system_cost_agg = \
     transit_system_cost_with_typology.groupby(['mode_group','geotype'])[['veh_revenue_hours',
     'veh_revenue_miles', 'Directional.Route.Miles']].sum()
@@ -701,11 +708,11 @@ transit_system_cost_agg = pd.merge(population_fraction, transit_system_cost_agg,
 
 transit_system_cost_agg.loc[:, 'VehicleRevenueMilesPerDay'] = \
     transit_system_cost_agg.loc[:, 'veh_revenue_miles'] * \
-        transit_system_cost_agg.loc[:, 'pop_fraction']/ 365
+        transit_system_cost_agg.loc[:, 'pop_fraction']
 
 transit_system_cost_agg.loc[:, 'VehicleRevenueHoursPerDay'] = \
     transit_system_cost_agg.loc[:, 'veh_revenue_hours'] * \
-        transit_system_cost_agg.loc[:, 'pop_fraction']/ 365
+        transit_system_cost_agg.loc[:, 'pop_fraction']
 
 transit_system_cost_agg.loc[:, 'DirectionalRouteMiles'] = \
     transit_system_cost_agg.loc[:, 'Directional.Route.Miles'] * \
@@ -716,6 +723,10 @@ transit_system_cost_agg = \
                              'PopulationMicrotypeID', 'VehicleRevenueMilesPerDay',
                              'VehicleRevenueHoursPerDay', 'DirectionalRouteMiles']]
 
+print('total mileage after assignment:')
+print(transit_system_cost_agg[['VehicleRevenueMilesPerDay',
+'VehicleRevenueHoursPerDay', 'DirectionalRouteMiles']].sum())
+# <codecell>
 transit_attributes = pd.merge(transit_system_cost_agg, transit_attributes,
                               on = ['geotype','network_microtype', 'mode'], how = 'outer')
 
