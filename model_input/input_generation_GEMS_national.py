@@ -504,7 +504,7 @@ lr_mode_results.to_csv(os.path.join(output_dir, "calibration/transit_cost_by_hou
 trips.loc[trips['mode'] == 'hv', 'mode'] = 'auto'
 trips.loc[trips['mode'] == 'taxi', 'mode'] = 'ridehail'
 trips.loc[:, 'weighted_time'] = \
-    trips.loc[:, 'wtperfin'] * trips.loc[:, 'inv_time'] * 60 # in sec
+    trips.loc[:, 'wtperfin'] * (trips.loc[:, 'inv_time'] + trips.loc[:, 'access_time'] + trips.loc[:, 'wait_time'])* 60 # in sec
 trips.loc[:, 'weighted_dist'] = \
     trips.loc[:, 'wtperfin'] * trips.loc[:, 'trpmiles'] * 1609.34 # in meter
 
@@ -533,8 +533,12 @@ mode_split.loc[:, 'fraction'] = \
 mode_split.drop(columns = ['wtperfin'], inplace = True)
 mode_split.to_csv(os.path.join(output_dir, "calibration/NHTS_mode_split.csv"), index = False) 
 
-trips.loc[:, 'weighted_total_time_hr'] = \
+trips.loc[:, 'weighted_inv_time_hr'] = \
     trips.loc[:, 'wtperfin'] * trips.loc[:, 'inv_time'] / 60 # in hr
+trips.loc[:, 'weighted_acc_time_hr'] = \
+    trips.loc[:, 'wtperfin'] * trips.loc[:, 'access_time'] / 60 # in hr
+trips.loc[:, 'weighted_wait_time_hr'] = \
+    trips.loc[:, 'wtperfin'] * trips.loc[:, 'wait_time'] / 60 # in hr
 
 trips.loc[:, 'weighted_dist_mi'] = \
     trips.loc[:, 'wtperfin'] * trips.loc[:, 'trpmiles']
@@ -542,15 +546,31 @@ trips.loc[:, 'weighted_dist_mi'] = \
 trip_travel_time = \
     trips.groupby(['o_geotype', 
                    'o_network_microtype', 
-                   'mode'])[['weighted_total_time_hr', 
+                   'mode'])[['weighted_inv_time_hr', 'weighted_acc_time_hr',  
+                             'weighted_wait_time_hr',
                              'weighted_dist_mi', 'wtperfin']].sum()
 trip_travel_time = trip_travel_time.reset_index()
+
+trip_travel_time.loc[:, 'trip_wait_time (h)'] = \
+    trip_travel_time.loc[:, 'weighted_wait_time_hr']/trip_travel_time.loc[:, 'wtperfin']
+trip_travel_time.loc[:, 'trip_acc_time (h)'] = \
+        trip_travel_time.loc[:, 'weighted_acc_time_hr']/trip_travel_time.loc[:, 'wtperfin']
+trip_travel_time.loc[:, 'trip_inv_time (h)'] = \
+    trip_travel_time.loc[:, 'weighted_inv_time_hr']/trip_travel_time.loc[:, 'wtperfin']
+
 trip_travel_time.loc[:, 'trip_travel_time (h)'] = \
-    trip_travel_time.loc[:, 'weighted_total_time_hr']/trip_travel_time.loc[:, 'wtperfin']
+    trip_travel_time.loc[:, ['weighted_inv_time_hr', 'weighted_acc_time_hr', 'weighted_wait_time_hr']].sum(axis = 1)\
+        /trip_travel_time.loc[:, 'wtperfin']
+        
 trip_travel_time.loc[:, 'trip_length (mile)'] = \
     trip_travel_time.loc[:, 'weighted_dist_mi']/trip_travel_time.loc[:, 'wtperfin']
+
+trip_travel_time.loc[:, 'avg_inv_speed (mph)'] = \
+    trip_travel_time.loc[:, 'weighted_dist_mi']/trip_travel_time.loc[:, 'weighted_inv_time_hr']
+
 trip_travel_time.loc[:, 'avg_speed (mph)'] = \
-    trip_travel_time.loc[:, 'weighted_dist_mi']/trip_travel_time.loc[:, 'weighted_total_time_hr']
+    trip_travel_time.loc[:, 'weighted_dist_mi']/\
+        trip_travel_time.loc[:, ['weighted_inv_time_hr', 'weighted_acc_time_hr', 'weighted_wait_time_hr']].sum(axis = 1)
 trip_travel_time.rename(columns = {'wtperfin': 'trip_count'}, inplace = True)
 trip_travel_time.to_csv(os.path.join(output_dir, "calibration/NHTS_trip_travel_time.csv"), index = False) 
 # <codecell>
