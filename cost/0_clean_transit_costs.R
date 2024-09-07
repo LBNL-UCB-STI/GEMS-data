@@ -26,15 +26,15 @@ library(stringr)
 # Source link: https://www.huduser.gov/portal/datasets/usps/ZIP_COUNTY_032020.xlsx
 cty <- read.csv(file.path(datadir,"ZIP_COUNTY_LOOKUP_2023.csv")) %>%
   mutate(geoid = str_pad(as.character(geoid), 11, pad = "0"))%>% 
-  mutate(county = str_sub(geoid, 1, 5), zip = as.character(zip))%>% 
+  mutate(county = str_sub(geoid, 1, 5), zip = sprintf("%05d", zip))%>% 
   select(zip, county) %>% # 188563 rows
   distinct() # 54300 rows
 
 # regional tract to CBSA crosswalk
 xwalk <- read.csv(file.path(datadir, "cleaned_lodes8_crosswalk_with_ID.csv")) %>%
   select(cbsa, cbsaname, cty, ctyname, spatial_id) %>% 
-  distinct() %>%
-  mutate(cty = sprintf("%05d",cty))
+  mutate(cty = sprintf("%05d",cty)) %>%
+distinct() 
 
 ########################
 # IMPORT CAPITAL EXPENSES BY AGENCY
@@ -150,7 +150,9 @@ df <- capital_cost %>%
   left_join(roadway, by = c("NTD.ID", "Mode", "TOS")) %>%
   mutate(zip = sprintf("%05d",Zip.Code)) %>% # add leading zeroes back to zipcode (fix to 5 characters)
   left_join(cty, by = "zip", relationship = "many-to-many") %>% 
-  rename(cty = county) %>%
+  rename(cty = county)
+
+df <- df  %>%
   select(-Zip.Code, -Population, -Reporter.Type, - UZA.Name) %>%
   distinct() %>% 
   left_join(xwalk, by = "cty")

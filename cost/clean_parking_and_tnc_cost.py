@@ -13,11 +13,11 @@ import numpy as np
 
 os.chdir('C:/FHWA_R2')
 
-city_to_tract_file = 'spatial_boundary/CleanData/ZIP_COUNTY_LOOKUP_2023.csv'
+city_to_tract_file = 'spatial_boundary/CleanData/ZIP_COUNTY_LOOKUP_2022.csv'
 city_to_tract = read_csv(city_to_tract_file)
 city_to_tract = city_to_tract[['geoid', 'city', 'state']]
 city_to_tract = city_to_tract.drop_duplicates(keep = 'first')
-
+print(len(city_to_tract.geoid.unique()))
 
 # processing parking fee
 parking_fee_file = 'Cost/RawData/parkopedia_cleaned_name.csv'
@@ -38,7 +38,7 @@ diff_cities = set(city_list_before) - set(city_list_after)
 
 parking_fee_by_tract = parking_fee_by_tract.rename(columns = {'geoid': 'tractcode'})
 parking_fee_by_tract.loc[:, 'tractcode'] = parking_fee_by_tract.loc[:, 'tractcode'].astype(str).str.zfill(11)
-parking_fee_by_tract.to_csv('Cost/CleanData/parking_tract_2017.csv', index = False)
+parking_fee_by_tract.to_csv('Cost/CleanData/parking_tract_2017_ct10.csv', index = False)
 
 # <codecell>
 # processing Uber fee
@@ -59,4 +59,4 @@ diff_cities = set(city_list_before) - set(city_list_after)
 uber_fee_by_tract = uber_fee_by_tract.rename(columns = {'geoid': 'tractcode'})
 uber_fee_by_tract.loc[:, 'tractcode'] = uber_fee_by_tract.loc[:, 'tractcode'].astype(str).str.zfill(11)
 
-uber_fee_by_tract.to_csv('Cost/CleanData/uber_fare_tract_2017.csv', index = False)
+uber_fee_by_tract.to_csv('Cost/CleanData/uber_fare_tract_2017_ct10.csv', index = False)

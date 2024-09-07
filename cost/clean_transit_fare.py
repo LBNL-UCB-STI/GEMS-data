@@ -23,7 +23,7 @@ transit_mode = {'bus': ["MB", "CB"],
                 'rail_l': ["LR"],
                 'rail_c': ["CR", "HR", "YR", "SR"]}
 # load city to tract crosswalk
-city_to_tract_file = 'spatial_boundary/CleanData/ZIP_COUNTY_LOOKUP_2023.csv'
+city_to_tract_file = 'spatial_boundary/CleanData/ZIP_COUNTY_LOOKUP_2022.csv'
 city_to_tract = read_csv(city_to_tract_file)
 city_to_tract = city_to_tract[['geoid', 'city', 'state']]
 city_to_tract = city_to_tract.drop_duplicates(keep = 'first')
@@ -70,5 +70,5 @@ transit_fare_out = transit_fare_out.rename(columns = {'geoid': 'tractcode'})
 transit_fare_out.loc[:, 'tractcode'] = transit_fare_out.loc[:, 'tractcode'].astype(str).str.zfill(11)
 transit_fare_out.loc[:, 'countycode'] = transit_fare_out.loc[:, 'tractcode'].str[0:5]
 
-transit_fare_out.to_csv('Cost/CleanData/transit_fare_by_tract_2017.csv', index = False)
+transit_fare_out.to_csv('Cost/CleanData/transit_fare_by_tract_2017_ct10.csv', index = False)
 
