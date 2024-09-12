@@ -74,7 +74,15 @@ geotype_rural_clusters = 'cluster2'
 #                                              network_typology_cbsa_nopar])
 # <codecell>
 # appending rural network typology
-
+renaming_network_type = {'Urban_1': 'Urban_5',
+                         'Urban_2': 'Urban_4',
+                         'Urban_3': 'Urban_3',
+                         'Urban_4': 'Urban_2',
+                         'Urban_5': 'Urban_1',
+                         'Rural_1': 'Rural_3',
+                         'Rural_2': 'Rural_2',
+                         'Rural_3': 'Rural_1'
+    }
 print(network_typology_noncbsa.columns)
 
 network_typology_noncbsa = network_typology_noncbsa[['tract', network_rural_clusters]]
@@ -92,6 +100,9 @@ network_typology_noncbsa.loc[:, 'network_microtype'] = 'Rural_' + \
 output_attr = ['GEOID', 'network_microtype']
 network_typology_output = pd.concat([network_typology_cbsa[output_attr],
                                      network_typology_noncbsa[output_attr]])
+
+network_typology_output.loc[:, 'network_microtype'] = \
+    network_typology_output.loc[:, 'network_microtype'].map(renaming_network_type)
 print(len(network_typology_output)) # 83612
 network_typology_output.to_csv(os.path.join(path_to_typology, 'network_typology_output_2020.csv'),
                                 index = False)
@@ -99,6 +110,12 @@ network_typology_output.to_csv(os.path.join(path_to_typology, 'network_typology_
 # <codecell>
 
 # assign geotype to census tract
+
+renaming_geotype = {'CBSA_1': 'B',
+                    'CBSA_2': 'A',
+                    'NONCBSA_1': 'C',
+                    'NONCBSA_2': 'D'}
+
 
 print(urban_geotype.columns)
 urban_geotype = urban_geotype[['spatial_id', geotype_urban_clusters]]
@@ -120,6 +137,8 @@ geotype_combined = pd.merge(geotype_combined, spatial_id_crosswalk,
                             on = 'spatial_id', how = 'left')
 
 geotype_combined = geotype_combined.rename(columns = {'trct':'GEOID'})
+geotype_combined.loc[:, 'geotype'] = \
+    geotype_combined.loc[:, 'geotype'].map(renaming_geotype)
 print(len(geotype_combined)) # 84412
 geotype_combined.to_csv(os.path.join(path_to_typology, 'geotype_output_2020.csv'),
                                 index = False)
@@ -128,6 +147,7 @@ geotype_combined.to_csv(os.path.join(path_to_typology, 'geotype_output_2020.csv'
 
 # consolidate micro-geotype and convert to 2010 boundary
 demand_microtype = demand_microtype[['GEOID', 'demand_microtype_comb']]
+demand_microtype = demand_microtype.rename(columns = {'demand_microtype_comb': 'demand_microtype'})
 geotype_combined['GEOID'] = geotype_combined['GEOID'].astype(str).str.zfill(11)
 network_typology_output['GEOID'] = network_typology_output['GEOID'].astype(str).str.zfill(11)
 demand_microtype['GEOID'] = demand_microtype['GEOID'].astype(str).str.zfill(11)
@@ -138,7 +158,7 @@ micro_geotype_combined = pd.merge(geotype_combined, demand_microtype,
 micro_geotype_combined = pd.merge(micro_geotype_combined, network_typology_output,
                                   on = 'GEOID', how = 'outer')
 
-micro_geotype_combined.loc[micro_geotype_combined['spatial_id'] == 15005, 'geotype'] = 'County_1'
+micro_geotype_combined.loc[micro_geotype_combined['spatial_id'] == 15005, 'geotype'] = 'C'
 print(len(micro_geotype_combined))
 
 # <codecell>
@@ -160,7 +180,7 @@ micro_geotype_combined_2010 = \
 print(len(micro_geotype_combined_2010))
 
 micro_geotype_combined_2010 = micro_geotype_combined_2010[['GEOID_TRACT_10', 'geotype',
-                                                           'network_microtype', 'demand_microtype_comb']]
+                                                           'network_microtype', 'demand_microtype']]
 
 
 # <codecell>

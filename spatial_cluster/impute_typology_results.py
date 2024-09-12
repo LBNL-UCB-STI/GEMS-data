@@ -67,11 +67,11 @@ micro_geotype_combined_imputed.loc[:, 'geotype'] = \
     micro_geotype_combined_imputed.loc[:, 'geotype'].fillna(method = 'ffill')
 
 micro_geotype_urban_imputed = \
-    micro_geotype_combined_imputed.loc[micro_geotype_combined_imputed['geotype'].isin(['CBSA_1', 'CBSA_2'])]
+    micro_geotype_combined_imputed.loc[micro_geotype_combined_imputed['geotype'].isin(['A', 'B'])]
 micro_geotype_urban_imputed = micro_geotype_urban_imputed.fillna(method = 'ffill')
 # micro_geotype_urban_imputed = micro_geotype_urban_imputed.fillna(method = 'bfill')
 micro_geotype_rural_imputed = \
-    micro_geotype_combined_imputed.loc[~micro_geotype_combined_imputed['geotype'].isin(['CBSA_1', 'CBSA_2'])]
+    micro_geotype_combined_imputed.loc[micro_geotype_combined_imputed['geotype'].isin(['C', 'D'])]
 micro_geotype_rural_imputed = micro_geotype_rural_imputed.fillna(method = 'ffill')
 # micro_geotype_rural_imputed = micro_geotype_rural_imputed.fillna(method = 'bfill')
 micro_geotype_combined_imputed = pd.concat([micro_geotype_urban_imputed, micro_geotype_rural_imputed])
@@ -119,11 +119,11 @@ micro_geotype_2010_imputed.loc[:, 'geotype'] = \
     micro_geotype_2010_imputed.loc[:, 'geotype'].fillna(method = 'ffill')
 
 micro_geotype_urban_imputed = \
-    micro_geotype_2010_imputed.loc[micro_geotype_2010_imputed['geotype'].isin(['CBSA_1', 'CBSA_2'])]
+    micro_geotype_2010_imputed.loc[micro_geotype_2010_imputed['geotype'].isin(['A', 'B'])]
 micro_geotype_urban_imputed = micro_geotype_urban_imputed.fillna(method = 'ffill')
 # micro_geotype_urban_imputed = micro_geotype_urban_imputed.fillna(method = 'bfill')
 micro_geotype_rural_imputed = \
-    micro_geotype_2010_imputed.loc[~micro_geotype_2010_imputed['geotype'].isin(['CBSA_1', 'CBSA_2'])]
+    micro_geotype_2010_imputed.loc[micro_geotype_2010_imputed['geotype'].isin(['C', 'D'])]
 micro_geotype_rural_imputed = micro_geotype_rural_imputed.fillna(method = 'ffill')
 # micro_geotype_rural_imputed = micro_geotype_rural_imputed.fillna(method = 'bfill')
 micro_geotype_2010_imputed = pd.concat([micro_geotype_urban_imputed, micro_geotype_rural_imputed])
@@ -169,7 +169,7 @@ typology_v1_sel['GEOID'] = \
 #                                       how = 'left')     
 
 micro_geotype_2010_imputed = micro_geotype_2010_imputed[['GEOID', 'geotype',
-                                                           'network_microtype', 'demand_microtype_comb']]
+                                                           'network_microtype', 'demand_microtype']]
 
 micro_geotype_2010_imputed = pd.merge(micro_geotype_2010_imputed, typology_v1_sel,
                                       on = 'GEOID', how = 'left')
