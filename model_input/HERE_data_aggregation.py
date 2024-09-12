@@ -38,7 +38,7 @@ HERE_data_microtype_3.rename(columns = {'tract_geoid': 'GEOID'}, inplace = True)
 HERE_data_microtype_3 = pd.merge(HERE_data_microtype_3, label_2010_short, 
                   on = 'GEOID', how = 'left')
 # keeping overlapped typology only
-HERE_data_microtype_3 = HERE_data_microtype_3.loc[HERE_data_microtype_3['network_microtype'] == 'Urban_4']
+HERE_data_microtype_3 = HERE_data_microtype_3.loc[HERE_data_microtype_3['network_microtype'] == 'Urban_2']
 
 def speed_data_processor(df):
 
@@ -76,7 +76,7 @@ HERE_data_microtype_other = \
     HERE_data_microtype_other.loc[HERE_data_microtype_other['microtype'] != 3]
 
 HERE_data_microtype_other = \
-    HERE_data_microtype_other.loc[HERE_data_microtype_other['network_microtype'] != 'Urban_4']
+    HERE_data_microtype_other.loc[HERE_data_microtype_other['network_microtype'] != 'Urban_2']
 HERE_data_microtype_other = speed_data_processor(HERE_data_microtype_other)
 
 # <codecell>
