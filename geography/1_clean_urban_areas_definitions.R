@@ -1,6 +1,6 @@
 # NATALIE POPOVICH
 # BERKELEY LAB
-
+# updated  Dec 18, 2023 by Xiaodan Xu
 
 # load packages
 library(sf)
@@ -8,133 +8,129 @@ library(readxl)
 library(dplyr)
 library(tidycensus)
 library(purrr)
+library(tigris)
+library(stringr)
 
 # Set working directory
-mywd <- "C:/FHWA/For FHWA folks/microtype_input_preparation"
+mywd <- "C:/FHWA_R2/spatial_boundary"
 setwd(mywd)
 
 datadir <- "RawData"
 cleandir <- "CleanData"
-
+analysis_year = 2021
 ###########
 # LOAD DATA
 ################
-# import shapefile of Urbanized areas and clusters
-# https://catalog.data.gov/dataset/tiger-line-shapefile-2019-2010-nation-u-s-2010-census-urban-area-national
-# https://www2.census.gov/geo/tiger/TIGER2019/UAC/tl_2019_us_uac10.zip
-ua <- st_read(file.path(datadir, "UAS/tl_2019_us_uac10"), 
-              query = "SELECT * FROM tl_2019_us_uac10") 
+# import Urbanized areas and clusters
 
-# import populations for each urban cluster and urban area
-# main website https://www.census.gov/programs-surveys/geography/technical-documentation/records-layout/2010-urban-lists-record-layout.html
-# Source link: https://www2.census.gov/geo/docs/reference/ua/ua_st_list_all.xls 
-pop <- read_excel(file.path(datadir, "/UAS/ua_st_list_all.xls"), col_names = T)
+ua <- get_acs(
+  geography = "urban area",
+  year = analysis_year,  
+  variables = c(population = "B01003_001",
+                housing_unit = "B25001_001"),
+  output = "wide")
+# 2020/2021 has 3592 samples, 2022 only has 2637 samples --> not used
 
-# crosswalk with spatial_ids
-xwalk <- read.csv(file.path(cleandir, "us_xwalk_tract_2017_withID.csv")) 
+ua <- ua %>% select(GEOID, NAME, populationE, housing_unitE) %>%
+  rename(UA_ID = GEOID, UA_NAME = NAME, UA_population = populationE, ua_housing = housing_unitE)
 
-# read in combined census tract CENSUS TRACT COMPILE
-#######################################
-# NOTE: TIGRIS files produce on 72,837 tracts for both 2017 and 2018 
+# ua <- st_read(file.path(datadir, "UAS/tl_2019_us_uac10"), 
+#               query = "SELECT * FROM tl_2019_us_uac10") 
 
-# tidycensus produces 73,056
 
-# importing and combining US census tracts
-us <- unique(fips_codes$state)[1:51]
+ua_boundary <- urban_areas(cb = FALSE, year = analysis_year)
+plot(st_geometry(ua_boundary))
 
-#tidycensus
-census_api_key("e74b4d8c97989e07245040ac84168a638247af9a", overwrite = TRUE)
-options(tigris_use_cache = TRUE)
+# load 2020 census tracts
+tracts <- read.csv(file.path(cleandir, "combined_tracts_2020.csv"))
 
-tracts <- reduce(
-  map(us, function(x) {
-    get_acs(geography = "tract", variables = "B01003_001", 
-            state = x, geometry = T, year = 2018)
-  }), 
-  rbind
-)
+#downloaded block /ua crosswalk file from census online: https://www2.census.gov/geo/docs/reference/ua/2020_UA_BLOCKS.txt
+# from here: https://www.census.gov/programs-surveys/geography/guidance/geo-areas/urban-rural.html
+cbg_ua_crosswalk <- read.csv(file.path('spatial_boundary', datadir, '2020_UA_BLOCKS.txt'), sep = "|")
+
+
+# Field Name|Field Description
+# STATE|Two digit State code
+# COUNTY|Three digit County code
+# TRACT|Six digit 2020 Census Tract code
+# BLOCK|Four digit 2020 Census block code
+# GEOID|Fifteen digit geographic identification code made up of the STATE, COUNTY, TRACT and BLOCK codes
+# AREALAND|Land area of the 2020 Census block (square meters)
+# 2020_HOU|2020 Census housing unit count of the 2020 Census block
+# 2020_POP|2020 Census popuation of the 2020 Census block
+# 2020_UACE|2020 Census Urban Area code
+# 2020_UA_NAME|2020 Census Urban Area name
 
 #############
 # DATA CLEANING
 ##############
-tracts = tracts %>%
-  select(-NAME, -variable, -moe) %>%
-  rename(population = estimate)
+cbg_ua_crosswalk <- cbg_ua_crosswalk %>%
+  mutate(block_ID = str_pad(GEOID, 15, pad = "0")) %>%
+  mutate(GEOID = str_sub(block_ID, start = 1, end=11))
 
-# to save space for other data manipulation, remove geometry
-tracts.df = st_drop_geometry(tracts)  
+cbg_ua_crosswalk <- cbg_ua_crosswalk %>%
+  select(GEOID,X2020_UACE) %>% distinct()
 
-# for cbsas across state boundaries, each part must be summed to get to full size
-pop <- pop %>% 
-  group_by(UACE) %>% 
-  mutate(UACE10 = UACE,
-         pop_region = sum(POP, na.rm = T),
-         hu_region = sum(HU, na.rm = T), 
-         alandsqmi_region = sum(AREALANDSQMI, na.rm = T),
-         awatersqmi_region = sum(AREAWATERSQMI, na.rm = T)) %>%
-  #keep one observation per urbanized area
-  select(UACE10, UACE, NAME, pop_region, hu_region, alandsqmi_region, awatersqmi_region) %>%
-  distinct()
-  
-# merge with ua boundaries so that each region can be matched to a population
-ua = ua %>% 
-  merge(pop, by = "UACE10") %>%
-  select(NAME, UACE, pop_region, hu_region, alandsqmi_region, awatersqmi_region)
+cbg_ua_crosswalk <- cbg_ua_crosswalk %>%
+  mutate(X2020_UACE = str_pad(X2020_UACE, 5, pad = "0")) %>%
+  rename(UA_ID = X2020_UACE)
 
-##################
-# intersect tracts with UAs to categorize census tracts
-####################
-tracts <- st_transform(tracts , st_crs(ua))
-int = st_intersection(tracts, ua) 
+tract_ua_df <- merge(cbg_ua_crosswalk, ua, by = c('UA_ID'), all.x = TRUE)
 
-data = int %>%
-  st_drop_geometry() %>%
-  select(GEOID, pop_region, UACE, NAME)  %>%
-  right_join(tracts.df, by = "GEOID") %>% # merge with entire set of tracts
-  distinct() %>%
- group_by(GEOID) %>% # If census tract is in two different area types, keep the one with the larger population
-  mutate(max = max(pop_region)) %>%
-  filter(pop_region == max | is.na(pop_region)) %>%
-  select(-max)
+tracts_short <- tracts %>% select(GEOID, NAMELSAD) %>%
+  mutate(GEOID = str_pad(GEOID, 11, pad = "0"))
+
+tracts_with_ua_attr <- merge(tracts_short, tract_ua_df, by = 'GEOID', all.x = TRUE)
+
+tracts_with_ua_attr <- tracts_with_ua_attr %>%
+  mutate(census_urban_area = ifelse(is.na(UA_ID),0, 1),
+         UA_population = ifelse(is.na(UA_population),0, UA_population),
+         ua_housing = ifelse(is.na(ua_housing),0, ua_housing) ) %>%
+  arrange(GEOID,desc(census_urban_area), desc(UA_population))
+
+# DRIP DUPLICATE --> IF A TRACT BELONGS TO MULTIPLE URBAN AREA, assign it to bigger one
+tracts_with_ua_nodup <- tracts_with_ua_attr %>%
+  distinct(GEOID, .keep_all = TRUE)
+
 
 # Create different categories of region types 
-data = data %>% 
+tracts_with_ua_nodup = tracts_with_ua_nodup %>% 
   mutate(size_type = case_when(
-          pop_region >=1000000 ~ 1,
-          pop_region >= 500000 & pop_region < 1000000 ~ 2,
-          pop_region >= 200000 & pop_region < 500000 ~ 3, 
-          pop_region >= 50000 & pop_region < 200000 ~ 4,
-          pop_region >= 5000 & pop_region < 50000 ~ 5, 
-          pop_region >= 2500 & pop_region < 5000 ~ 6,
-          pop_region < 2500 | is.na(pop_region) ~7 )) %>% 
+    UA_population >=1000000 ~ 1,
+    UA_population >= 500000 & UA_population < 1000000 ~ 2,
+    UA_population >= 200000 & UA_population < 500000 ~ 3, 
+    UA_population >= 50000 & UA_population < 200000 ~ 4,
+    UA_population >= 5000 & UA_population < 50000 ~ 5, 
+    UA_population >= 2500 & UA_population < 5000 ~ 6,
+    UA_population < 2500 ~7 )) %>% 
   mutate(fhwa_type = case_when( # FHWA categories for the HERS Final Task 1 report (YEAR)
-    pop_region >=1000000 ~ 'major_urbanized',
-    pop_region >= 500000 & pop_region < 1000000 ~ 'large_urbanized',
-    pop_region >= 50000 & pop_region < 500000 ~ 'small_urbanized',
-    pop_region >= 5000 & pop_region < 50000 ~ 'small_urban', 
-    pop_region < 5000 | is.na(pop_region) ~ 'rural' )) %>% 
+    UA_population >=1000000 ~ 'major_urbanized',
+    UA_population >= 500000 & UA_population < 1000000 ~ 'large_urbanized',
+    UA_population >= 50000 & UA_population < 500000 ~ 'small_urbanized',
+    UA_population >= 5000 & UA_population < 50000 ~ 'small_urban', 
+    UA_population < 5000 ~ 'rural' )) %>% 
   mutate(fhwa_type_num = case_when(
-    pop_region >=1000000 ~ 5,
-    pop_region >= 500000 & pop_region < 1000000 ~ 4,
-    pop_region >= 50000 & pop_region < 500000 ~ 3,
-    pop_region >= 5000 & pop_region < 50000 ~ 2, 
-    pop_region < 5000 | is.na(pop_region) ~ 1 )) %>% 
-  mutate(census_type = case_when(
-    pop_region >= 50000  ~ 'urbanized_area',
-    pop_region >= 2500 & pop_region < 50000 ~ 'urban_cluster', 
-    pop_region < 2500 | is.na(pop_region) ~ 'rural' ))
+    UA_population >=1000000 ~ 5,
+    UA_population >= 500000 & UA_population < 1000000 ~ 4,
+    UA_population >= 50000 & UA_population < 500000 ~ 3,
+    UA_population >= 5000 & UA_population < 50000 ~ 2, 
+    UA_population < 5000  ~ 1 )) %>% 
+  mutate(fhwa_urban_area = case_when(
+    UA_population >= 50000  ~ 'urbanized_area',
+    UA_population >= 5000 & UA_population < 50000 ~ 'small_urban',
+    UA_population < 5000 & ua_housing >= 2000 ~ 'other_urban', 
+    UA_population < 5000 & ua_housing < 2000 ~ 'rural' ))
 
-table(data$census_type, data$fhwa_type)
+# final adjustment (for missing values)
+tracts_with_ua_nodup <- tracts_with_ua_nodup %>%
+  mutate(fhwa_urban_area = ifelse((census_urban_area == 1) & is.na(UA_NAME), 'other_urban', fhwa_urban_area))
 
-# merge with spatial IDs for stage 2 clusters 
-out = data %>%
-  mutate(GEOID = as.numeric(GEOID)) %>%
-  merge(xwalk, by = "GEOID") %>%
-  select(GEOID, pop_region, cty, ctyname, cbsa, cbsaname, fhwa_type, spatial_id, fhwa_type_num)
+table(tracts_with_ua_nodup$fhwa_urban_area, tracts_with_ua_nodup$census_urban_area)
+
 
 #export urban divisions
-write.csv(out, file.path(cleandir, "urban_divisions.csv"), row.names = F)
-
+write.csv(tracts_with_ua_nodup, file.path(cleandir, paste0("urban_divisions_", analysis_year, ".csv")), row.names = F)
+st_write(ua_boundary, file.path(cleandir, paste0("urban_divisions_boundary_", analysis_year, ".geojson")))
 
 
 

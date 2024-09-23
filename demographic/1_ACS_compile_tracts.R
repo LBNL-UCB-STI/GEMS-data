@@ -249,8 +249,8 @@ acs <- Reduce(function(x,y) merge(x = x, y = y, by = c("GEOID", "NAME"), na.omit
 ###########
 # export CSV files
 ###########
-
-fwrite(acs, file = "CleanData/acs_data_tracts_112023.csv", row.names = F)
+file_name = paste0("CleanData/acs_data_tracts_", analysis_year, ".csv")
+fwrite(acs, file = file_name, row.names = F)
 
 
 
