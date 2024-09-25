@@ -1,4 +1,8 @@
-library(tidyr)
+mywd <- "C:/Users/xiaodanxu/Documents/GitHub/GEMS-data/spatial_cluster"
+setwd(mywd)
+source('initialization.R')
+source('functions.R')
+
 netinputsdir <- "C:/FHWA_R2/Network/CleanData"
 spatialinputsdir <- "C:/FHWA_R2/spatial_boundary/CleanData"
 demandinputsdir <- "C:/FHWA_R2/Demand/CleanData"
@@ -137,7 +141,7 @@ ggsave(file = file.path(figuredir,'NON_CBSA_cluster_corr.png'),
 
 # First determine the number of clusters
 maxC=10
-for(which_input in ("non_cbsa","cbsa"){
+for(which_input in c("non_cbsa", "cbsa")){
   if(which_input=='cbsa'){
     this_input <- inputs_cbsa_scaled%>% dplyr::select(-is_cbsa,-spatial_id,-tract,-cbsa)
   }else{

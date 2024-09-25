@@ -1,11 +1,25 @@
-inputsdir <- "/Users/jessicalazarus/Documents/GEMS/Input Data"
-figuredir <- "/Users/jessicalazarus/Documents/GEMS/Geotype clustering/Figures"
-outputsdir <- "/Users/jessicalazarus/Documents/GEMS/Geotype clustering"
-inputs <- read.csv(file.path(inputsdir,"geotype_inputs.csv"))
-library(cluster)
+#inputsdir <- "/Users/jessicalazarus/Documents/GEMS/Input Data"
+
+mywd <- "C:/Users/xiaodanxu/Documents/GitHub/GEMS-data/spatial_cluster"
+setwd(mywd)
+source('initialization.R')
+source('functions.R')
+
+# library(cluster)
+# library(tidyverse)
+# library(data.table)
+# library(dplyr)
+# library(tidyr)
+
+demandinputsdir <- "C:/FHWA_R2/Demand/CleanData"
+spatialinputsdir <- "C:/FHWA_R2/spatial_boundary/CleanData"
+figuredir <- "C:/FHWA_R2/Demand/Figures"
+outputsdir <- "C:/FHWA_R2/Network/CleanData"
+
+inputs <- read.csv(file.path(demandinputsdir,"geotype_inputs.csv"))
 
 # link back to county/cbsa etc location info xwalk
-xwalk <- read.csv(file = file.path(inputsdir, "cleaned_lodes8_crosswalk_with_ID.csv")) %>%
+xwalk <- read.csv(file = file.path(spatialinputsdir, "cleaned_lodes8_crosswalk_with_ID.csv")) %>%
   select(cbsa, cbsaname, spatial_id, st, cty, ctyname) %>%
   distinct() 
 
@@ -197,64 +211,64 @@ inputs_ncbsa <- inputs_ncbsa %>% mutate(cluster2=as.factor(cluster_ncbsa$cluster
 table(inputs_cbsa$cluster2)
 table(inputs_ncbsa$cluster2)
 
-# Access centroids (optional)
-centroids_cbsa <- cluster_cbsa$centers
-centroids_ncbsa <- cluster_ncbsa$centers
-
-# Create radar charts for each cluster
-library(fmsb)  # for radar charts
-par(mfrow=c(1,k))  # arrange plots in a single row
-
-spider <- c(list_of_attr, 'demand_microtype_comb')
-list_attr <- c("pct_water","agriculture_frac","industry_jobs","education_jobs","healthcare_jobs","government_jobs","job_density","HHI","lm_density","Rural_agriculture" ,"Rural_towncenter","Suburban","Urban_center","Urban_industrial","pop_density","office_service_jobs","recreation_retail_jobs")
-# make dataframe of mean of each variable for each cluster (remove all factor variables)
-# keep cluster6 variable as factor
-radar_data <- inputs_cbsa
-radar_data <-  aggregate(radar_data[list_attr], list(inputs_cbsa$cluster2), median)
-
-#radar_data <- aggregate(raw_variables, list(data_scaled$cluster6), mean )
-#radar_data$Group.1 <- as.numeric(radar_data$Group.1)
-#colnames(radar_data) <- c("Microtype",factor_labels)
-
-# To use fmsb package, have to add 2 lines to the dataframe: the max and min of each variable to show on the plot
-colMax <- function(radar_data) sapply(radar_data, max, na.rm = TRUE) #max
-colMin <- function(radar_data) sapply(radar_data, min, na.rm = TRUE) #min
-
-# first row is the column max, second row is the column min
-#radar_data <- rbind(colMax(radar_data), colMin(radar_data), radar_data)
-#rownames(radar_data) = c("max", "min", "Rural_agriculture", "Rural_towncenter", "Suburban", "Urban_center", "Urban_industrial")
-
-radar_data <- radar_data  %>% select(-Group.1 )
-radar_data  <- mutate_all(radar_data , function(x) as.numeric(as.character(x)))
-
-png(file = file.path(figuredir,"spider_urban_2clusters_cluster1.png"),height = 700, width = 700)
-#spider1 <- radarchart(radar_data, axistype = 0, #seg = 4, pty = 32, pdensity = NULL, pangle = 45, 
-#                      pcol = "#636363", pfcol="#0000B3FF", plwd=4 , cex.main = 2, #title font size
-#                      cglty = 3, cglwd = 1, title = "Urban 1", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, 
-#                      vlabels = NULL, vlcex = 1.2, caxislabels = NULL, calcex = NULL, paxislabels = NULL, palcex = 1.2)
-spider1 <- radarchart(radar_data, axistype = 0, #seg = 4, pty = 32, pdensity = NULL, pangle = 45, 
-                      title = "Urban 1"
-                      )
-
-dev.off()
-
-png(file = file.path(figuredir,"spider_12fac_clara6_cluster2.png"),height = 700, width = 700)
-spider2 <- radarchart(radar_data[c(1:2,4), ], axistype = 0, pty = 32, cex.main = 2, pcol = "#636363", pfcol="#4500FFFF" , plwd=4 , palcex = 1.2,
-                      cglty = 3, cglwd = 1, title = "Rural towncenter", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, vlcex = 1.2)
-dev.off()
-
-png(file = file.path(figuredir,"spider_12fac_clara6_cluster3.png"),height = 700, width = 700)
-spider3 <- radarchart(radar_data[c(1:2,5), ], axistype = 0, pty = 32, pcol = "#636363", cex.main = 2, pfcol="#C527D8FF" , plwd=4 , palcex = 1.2,
-                      cglty = 3, cglwd = 1, title = "Suburban", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, vlcex = 1.2)
-dev.off()
-
-png(file = file.path(figuredir,"spider_12fac_clara6_cluster4.png"),height = 700, width = 700)
-spider4 <- radarchart(radar_data[c(1:2,6), ], axistype = 0, pty = 32, pcol = "#636363", cex.main = 2, pfcol= "#FFA35CFF", plwd=4 , palcex = 1.2,
-                      cglty = 3, cglwd = 1, title = "Urban center", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, vlcex = 1.2)
-dev.off()
-
-png(file = file.path(figuredir,"spider_12fac_clara6_cluster5.png"),height = 700, width = 700)
-spider5 <- radarchart(radar_data[c(1:2,7), ], axistype = 0,  pty = 32, pcol = "#636363", cex.main = 2, pfcol=  "#FFF50AFF", plwd=4 , palcex = 1.2,
-                      cglty = 3, cglwd = 1, title = "Urban industrial", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, vlcex = 1.2)
-dev.off()
+# # Access centroids (optional)
+# centroids_cbsa <- cluster_cbsa$centers
+# centroids_ncbsa <- cluster_ncbsa$centers
+# 
+# # Create radar charts for each cluster
+# library(fmsb)  # for radar charts
+# par(mfrow=c(1,k))  # arrange plots in a single row
+# 
+# spider <- c(list_of_attr, 'demand_microtype_comb')
+# list_attr <- c("pct_water","agriculture_frac","industry_jobs","education_jobs","healthcare_jobs","government_jobs","job_density","HHI","lm_density","Rural_agriculture" ,"Rural_towncenter","Suburban","Urban_center","Urban_industrial","pop_density","office_service_jobs","recreation_retail_jobs")
+# # make dataframe of mean of each variable for each cluster (remove all factor variables)
+# # keep cluster6 variable as factor
+# radar_data <- inputs_cbsa
+# radar_data <-  aggregate(radar_data[list_attr], list(inputs_cbsa$cluster2), median)
+# 
+# #radar_data <- aggregate(raw_variables, list(data_scaled$cluster6), mean )
+# #radar_data$Group.1 <- as.numeric(radar_data$Group.1)
+# #colnames(radar_data) <- c("Microtype",factor_labels)
+# 
+# # To use fmsb package, have to add 2 lines to the dataframe: the max and min of each variable to show on the plot
+# colMax <- function(radar_data) sapply(radar_data, max, na.rm = TRUE) #max
+# colMin <- function(radar_data) sapply(radar_data, min, na.rm = TRUE) #min
+# 
+# # first row is the column max, second row is the column min
+# #radar_data <- rbind(colMax(radar_data), colMin(radar_data), radar_data)
+# #rownames(radar_data) = c("max", "min", "Rural_agriculture", "Rural_towncenter", "Suburban", "Urban_center", "Urban_industrial")
+# 
+# radar_data <- radar_data  %>% select(-Group.1 )
+# radar_data  <- mutate_all(radar_data , function(x) as.numeric(as.character(x)))
+# 
+# png(file = file.path(figuredir,"spider_urban_2clusters_cluster1.png"),height = 700, width = 700)
+# #spider1 <- radarchart(radar_data, axistype = 0, #seg = 4, pty = 32, pdensity = NULL, pangle = 45, 
+# #                      pcol = "#636363", pfcol="#0000B3FF", plwd=4 , cex.main = 2, #title font size
+# #                      cglty = 3, cglwd = 1, title = "Urban 1", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, 
+# #                      vlabels = NULL, vlcex = 1.2, caxislabels = NULL, calcex = NULL, paxislabels = NULL, palcex = 1.2)
+# spider1 <- radarchart(radar_data, axistype = 0, #seg = 4, pty = 32, pdensity = NULL, pangle = 45, 
+#                       title = "Urban 1"
+#                       )
+# 
+# dev.off()
+# 
+# png(file = file.path(figuredir,"spider_12fac_clara6_cluster2.png"),height = 700, width = 700)
+# spider2 <- radarchart(radar_data[c(1:2,4), ], axistype = 0, pty = 32, cex.main = 2, pcol = "#636363", pfcol="#4500FFFF" , plwd=4 , palcex = 1.2,
+#                       cglty = 3, cglwd = 1, title = "Rural towncenter", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, vlcex = 1.2)
+# dev.off()
+# 
+# png(file = file.path(figuredir,"spider_12fac_clara6_cluster3.png"),height = 700, width = 700)
+# spider3 <- radarchart(radar_data[c(1:2,5), ], axistype = 0, pty = 32, pcol = "#636363", cex.main = 2, pfcol="#C527D8FF" , plwd=4 , palcex = 1.2,
+#                       cglty = 3, cglwd = 1, title = "Suburban", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, vlcex = 1.2)
+# dev.off()
+# 
+# png(file = file.path(figuredir,"spider_12fac_clara6_cluster4.png"),height = 700, width = 700)
+# spider4 <- radarchart(radar_data[c(1:2,6), ], axistype = 0, pty = 32, pcol = "#636363", cex.main = 2, pfcol= "#FFA35CFF", plwd=4 , palcex = 1.2,
+#                       cglty = 3, cglwd = 1, title = "Urban center", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, vlcex = 1.2)
+# dev.off()
+# 
+# png(file = file.path(figuredir,"spider_12fac_clara6_cluster5.png"),height = 700, width = 700)
+# spider5 <- radarchart(radar_data[c(1:2,7), ], axistype = 0,  pty = 32, pcol = "#636363", cex.main = 2, pfcol=  "#FFF50AFF", plwd=4 , palcex = 1.2,
+#                       cglty = 3, cglwd = 1, title = "Urban industrial", maxmin = TRUE, na.itp = TRUE, centerzero = FALSE, vlcex = 1.2)
+# dev.off()
 
