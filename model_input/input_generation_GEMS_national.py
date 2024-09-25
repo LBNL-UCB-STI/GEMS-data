@@ -98,6 +98,19 @@ transit_availability = read_csv(os.path.join(input_dir, 'Demand', 'mode_availabi
 
 # <codecell>
 
+# step 0 -- sanity check on the data
+trips.loc[:, 'weighted_dist_mi'] = \
+    trips.loc[:, 'wtperfin'] * trips.loc[:, 'trpmiles']
+trips_auto = trips.loc[trips['mode'] == 'hv']
+cut_off = trips_auto['trpmiles'].quantile(0.999)
+print(cut_off)
+trips_auto = trips_auto.loc[trips_auto['trpmiles']<=cut_off]
+trips_auto.loc[:, 'less_than_150'] = 0
+trips_auto.loc[trips_auto['trpmiles'] <= 150, 'less_than_150'] = 1
+print(trips_auto.groupby(['less_than_150'])['weighted_dist_mi'].sum())
+
+# <codecell>
+
 # Step 1  --  generate 'DistanceBins.csv'  --> 8 bins
 # agg level: origin geotype-network microtype, distance bin
 
