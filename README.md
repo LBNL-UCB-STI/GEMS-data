@@ -1,6 +1,7 @@
 # GEMS Data Generation 
 
 **POC: Xiaodan Xu, Ph.D. (XiaodanXu@lbl.gov)**
+
 **Latest update: 09/25/2024**
 
 **List of Modules**
@@ -48,6 +49,7 @@ https://www2.census.gov/geo/docs/maps-data/data/rel2020/tract/tab20_tract20_trac
 * spatial_boundary/CleanData/combined_county_{year}.geojson and csv
 * spatial_boundary/CleanData/combined_geotype_unit_{year}.geojson and csv
 * spatial_boundary/CleanData/cleaned_lodes8_crosswalk_with_ID.csv
+* spatial_boundary/CleanData/census_tract_crosswalk_2010_2020.csv
 
 **step 3: Collecting Zip code, city, county and census tract crosswalk**
 
@@ -165,9 +167,10 @@ Land_use/CleanData/imputed_NLCD_data_dev_only.csv
 spatial_boundary/CleanData/urban_divisions_2021.csv
 
 ## E - Network generation
+
 ### E1. processing OSMNX data at census tract level
 
-**step 1: query OSM network metrics **
+**step 1: query OSM network metrics (takes long time to run)**
 
 **code**: [generate_OSMNX_metrics.py](network/generate_OSMNX_metrics.py)
 
@@ -179,6 +182,54 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 
 **output**:
 * Network/CleanData/OSMNX/*
+
+**step 2: compile OSM network metrics into one file **
+
+**code**:[Generate_osmnx_metrics.ipynb](network/Generate_osmnx_metrics.ipynb)
+
+**Input**: 
+* Network/CleanData/OSMNX/*
+
+**process**:
+* Compile OSMNX network attributes
+* Generate derived network attributes (e.g., intersection density)
+
+**output**:
+* Network/CleanData/OSMNX/osm_metrics.csv
+
+### E2. processing HPMS data at census tract level
+
+**Step 1: intersect HPMS network with census tract boundary**
+
+**code**:[process_lane_mile_from_hpms.R](network/process_lane_mile_from_hpms.R)
+
+**Input**:
+* Network/RawData/HPMS2017/{state+year}/*.shp
+* From theme A: spatial_boundary/CleanData/combined_tracts_2020.geojson
+
+**process**:
+* Spatial intersection between HPMS network and census boundary
+* Compute lane miles
+
+**output**:
+* Network/RawData/{state}_HPMS_with_{year}_GEOID_LANEMILE.geojson
+
+**Step 2: generate network attributes by tract from processed data**
+
+**code**: [0_clean_hpms.ipynb](network/0_clean_hpms.ipynb)
+
+**Input**:
+* Network/RawData/{state}_HPMS_with_{year}_GEOID_LANEMILE.geojson
+* Road roughness scale: Network/RawData/RRS2023/RuggednessScale2010tracts.csv'
+* Spatial crosswalk (for RRS): spatial_boundary/CleanData/census_tract_crosswalk_2010_2020.csv
+
+**process**:
+* Combine and clean processed HPMS data
+* Compute network metrics at the tract level
+* Append RRS attributes from USDA (https://www.ers.usda.gov/data-products/area-and-road-ruggedness-scales/)
+
+**output**:
+* Network/CleanData/network_microtype_metrics_2.csv
 
 ## F - Spatial clustering
 ### F1. Develop socio-economic microtype
