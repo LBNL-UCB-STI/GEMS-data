@@ -1,10 +1,21 @@
 # GEMS Data Generation 
 
-## POC: Xiaodan Xu, Ph.D. (XiaodanXu@lbl.gov)
-## Latest update: 02/27/2024
+**POC: Xiaodan Xu, Ph.D. (XiaodanXu@lbl.gov)**
+**Latest update: 09/25/2024**
 
+**List of Modules**
+<!--ts-->
+* [Geographic boundary](#a---geographic-boundary)
+* [Demographic characteristics](#b---demograhic-characteristics)
+* [Travel demand](#c---demand-attributes)
+* [Land use](#d---land-use)
+* [Network characteristics](#e---network-generation)
+* [Spatial clustering](#f---spatial-clustering)
+* [Accessibility](#g---accessibility-and-mode-availability)
+* [Cost](#h---cost)
+<!--te-->
 
-## Theme A: Geographic boundary
+## A - Geographic boundary
 ### a1. collecting micro-geotype boundary
 
 **step 1: collecting and cleaning spatial crosswalk file for LODES8** (using 2020 census boundary)
@@ -52,7 +63,7 @@ https://www2.census.gov/geo/docs/maps-data/data/rel2020/tract/tab20_tract20_trac
 * spatial_boundary/CleanData/ZIP_COUNTY_LOOKUP_2023.csv
 
 
-## Theme B: Demograhic characteristics
+## B - Demograhic characteristics
 ### b1. Collecting ACS data at census tract level
 
 **code**: [1_ACS_compile_tracts.R](demographic/1_ACS_compile_tracts.R)
@@ -65,7 +76,7 @@ https://www2.census.gov/geo/docs/maps-data/data/rel2020/tract/tab20_tract20_trac
 * Demography/CleanData/acs_data_tracts_{date}.csv
 
 
-## Theme C: Collect demand related attributes
+## C - Demand attributes
 ### c1. clean and processing LEHD LODES8 data
 
 **step 1: collecting LEHD LODES 8 data**
@@ -99,7 +110,7 @@ Demand/CleanData/OD/* and spatial_boundary/CleanData/combined_tracts_{year}.csv
 **output**:
 * Demand/CleanData/OD_distance/*
 
-## Theme D: Collect land use attributes
+## D - Land use
 ### D1. land use characteristics from NLCD data
 
 **step 1: collecting and cleaning NLCD data**
@@ -153,20 +164,23 @@ Land_use/CleanData/imputed_NLCD_data_dev_only.csv
 **Output**:
 spatial_boundary/CleanData/urban_divisions_2021.csv
 
-## Theme E: Network generation
-### e1. processing OSMNX data at census tract level
+## E - Network generation
+### E1. processing OSMNX data at census tract level
+
+**step 1: query OSM network metrics **
 
 **code**: [generate_OSMNX_metrics.py](network/generate_OSMNX_metrics.py)
 
 **Input**: queried 2023 OSM metrics from API in R and spatial boundary from step a1 above
 
+**process**:
 * load network statistics from OSMNX
 * if no statistics found, fill in tract-level attributes with NA
 
 **output**:
 * Network/CleanData/OSMNX/*
 
-## Theme F: Spatial clustering
+## F - Spatial clustering
 ### F1. Develop socio-economic microtype
 
 **step 1: compile demand attributes at census tract level**
@@ -226,7 +240,7 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 **output**:
 * Demand/CleanData/geotype_inputs.csv
 
-## Theme G: Accessibility and mode availability
+## G - Accessibility and mode availability
 
 ### G1. processing bike density at census tract level
 
@@ -261,7 +275,7 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 **output**:
 * Network/CleanData/transit_availability_with_dist_{year}.csv
 
-## Theme H: User cost
+## H - Cost
 
 ### H1. processing transit fare at census tract level
 
@@ -295,9 +309,8 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 * 'Cost/CleanData/parking_tract_{year}.csv'
 * 'Cost/CleanData/uber_fare_tract_{year}.csv'
 
-## Theme  I: System cost
 
-### H1. processing transit system cost at county level
+### H3. processing transit system cost at county level
 
 **code**: [0_clean_transit_costs.R](cost/0_clean_transit_costs.R)
 
@@ -313,7 +326,7 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 * 'Cost/CleanData/transit_system_cost.csv'
 
 
-### H2. processing highway system cost at county level
+### H4. processing highway system cost at county level
 
 **code**: [0_clean_road_network_costs.R](cost/0_clean_road_network_costs.R)
 
