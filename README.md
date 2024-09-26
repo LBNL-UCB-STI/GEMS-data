@@ -14,6 +14,7 @@
 * [Spatial clustering](#f---spatial-clustering)
 * [Accessibility](#g---accessibility-and-mode-availability)
 * [Cost](#h---cost)
+
 <!--te-->
 
 ## A - Geographic boundary
@@ -229,6 +230,7 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 * Append RRS attributes from USDA (https://www.ers.usda.gov/data-products/area-and-road-ruggedness-scales/)
 
 **output**:
+* Network/CleanData/network_microtype_metrics.csv (no RRS)
 * Network/CleanData/network_microtype_metrics_2.csv
 
 ## F - Spatial clustering
@@ -251,7 +253,7 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 * Generate tract-level variables using 2020 census boundary and count number of missing values for each variable generated
 
 **output**:
-* Demand/CleanData/microtype_inputs_demand_V2.csv
+* Demand/CleanData/microtype_inputs_demand.csv
 
 **step 2: Develop and validate socio-economic microtype**
 
@@ -290,6 +292,40 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 
 **output**:
 * Demand/CleanData/geotype_inputs.csv
+
+**step 2: Develop and validate geotype**
+**code**: [geotype_clustering.R](spatial_cluster/geotype_clustering.R)
+
+**Input**:
+* Demand/CleanData/geotype_inputs.csv
+* spatial_boundary/CleanData/cleaned_lodes8_crosswalk_with_ID.csv
+
+**Processes**:
+* DBI/ASW assessment to determine number of clusters
+* Perform PAM clustering with different number of clusters
+
+**output**:
+* Network/CleanData/Geotype_Urban_Clusters_k2_4_pam.csv
+* Network/CleanData/Geotype_Rural_Clusters_k2_4_pam.csv
+
+### F3. Develop network type
+**code**: [network_cluster.R](spatial_cluster/network_cluster.R)
+
+**Input**: compile inputs from various themes, including:
+* load spatial boundary from Theme A: spatial_boundary/CleanData/cleaned_lodes8_crosswalk_with_ID.csv
+* Load compiled network attributes: Network/CleanData/network_microtype_metrics_2.csv AND Network/CleanData/OSMNX/osm_metrics.csv
+* Load socio-economic typology inputs: * Demand/CleanData/microtype_inputs_demand.csv
+* Load geotype inputs (for population imputation): Demand/CleanData/geotype_inputs.csv
+
+**Processes**:
+* Compile input data and fill missing values 
+* DBI/ASW assessment to determine number of clusters
+* Perform CLARA clustering with different number of clusters for CBSA/Non-CBSA
+
+**output**:
+* Network/CleanData/network_geotype_non_cbsa_clustered_scaled_data_exEdgeCount_byTracts.csv
+* Network/CleanData/network_geotype_cbsa_clustered_scaled_data_exEdgeCount.csv
+
 
 ## G - Accessibility and mode availability
 

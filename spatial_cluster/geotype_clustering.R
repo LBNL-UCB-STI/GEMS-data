@@ -181,10 +181,10 @@ data_scaled_ncbsa <- data_scaled_ncbsa %>% mutate(cluster4=as.factor(cluster_ncb
 table(inputs_cbsa$cluster4)
 table(inputs_ncbsa$cluster4)
 
-write.csv(inputs_cbsa, file.path(outputsdir,"Urban_Clusters_k2_4_pam.csv"))
-write.csv(inputs_ncbsa, file.path(outputsdir,"Rural_Clusters_k2_4_pam.csv"))
-write.csv(data_scaled_cbsa, file.path(outputsdir,"Urban_Clusters_k2_4_pam_scaled.csv"))
-write.csv(data_scaled_ncbsa, file.path(outputsdir,"Rural_Clusters_k2_4_pam_scaled.csv"))
+write.csv(inputs_cbsa, file.path(outputsdir,"Geotype_Urban_Clusters_k2_4_pam.csv"))
+write.csv(inputs_ncbsa, file.path(outputsdir,"Geotype_Rural_Clusters_k2_4_pam.csv"))
+write.csv(data_scaled_cbsa, file.path(outputsdir,"Geotype_Urban_Clusters_k2_4_pam_scaled.csv"))
+write.csv(data_scaled_ncbsa, file.path(outputsdir,"Geotype_Rural_Clusters_k2_4_pam_scaled.csv"))
 
 
 cluster_cbsa <- pam(data_scaled_cbsa, 7) 
@@ -198,10 +198,10 @@ data_scaled_ncbsa <- data_scaled_ncbsa %>% mutate(cluster8=as.factor(cluster_ncb
 table(inputs_cbsa$cluster7)
 table(inputs_ncbsa$cluster8)
 
-write.csv(inputs_cbsa, file.path(outputsdir,"Urban_Clusters_k7_pam.csv"))
-write.csv(inputs_ncbsa, file.path(outputsdir,"Rural_Clusters_k8_pam.csv"))
-write.csv(data_scaled_cbsa, file.path(outputsdir,"Urban_Clusters_k7_pam_scaled.csv"))
-write.csv(data_scaled_ncbsa, file.path(outputsdir,"Rural_Clusters_k8_pam_scaled.csv"))
+write.csv(inputs_cbsa, file.path(outputsdir,"Geotype_Urban_Clusters_k7_pam.csv"))
+write.csv(inputs_ncbsa, file.path(outputsdir,"Geotype_Rural_Clusters_k8_pam.csv"))
+write.csv(data_scaled_cbsa, file.path(outputsdir,"Geotype_Urban_Clusters_k7_pam_scaled.csv"))
+write.csv(data_scaled_ncbsa, file.path(outputsdir,"Geotype_Rural_Clusters_k8_pam_scaled.csv"))
 k <- 2
 cluster_cbsa <- kmeans(data_scaled_cbsa, k) 
 inputs_cbsa <- inputs_cbsa %>% mutate(cluster2=as.factor(cluster_cbsa$cluster))
