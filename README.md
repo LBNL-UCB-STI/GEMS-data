@@ -4,7 +4,8 @@
 **Latest update: 09/25/2024**
 
 **List of Modules**
-* [Geographic boundary](## Theme A: Geographic boundary)
+<!--ts-->
+* [## Theme A: Geographic boundary](## Theme A: Geographic boundary)
 * [Demographic characteristics](## Theme B: Demograhic characteristics)
 * [Travel demand](Theme C: Collect demand related attributes)
 * [Land use](## Theme D: Collect land use attributes)
@@ -12,6 +13,7 @@
 * [Spatial clustering](Theme F: Spatial clustering)
 * [Accessibility](## Theme G: Accessibility and mode availability)
 * [Cost](## Theme H: Cost)
+<!--te-->
 
 ## Theme A: Geographic boundary
 ### a1. collecting micro-geotype boundary
