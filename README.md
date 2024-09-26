@@ -5,7 +5,7 @@
 
 **List of Modules**
 <!--ts-->
-* [Geographic boundary](#theme_a_geographic_boundary)
+* [Geographic boundary](#a_geographic_boundary)
 * [Demographic characteristics](## Theme B: Demograhic characteristics)
 * [Travel demand](Theme C: Collect demand related attributes)
 * [Land use](## Theme D: Collect land use attributes)
@@ -15,7 +15,7 @@
 * [Cost](## Theme H: Cost)
 <!--te-->
 
-## Theme A: Geographic boundary
+## A - Geographic boundary
 ### a1. collecting micro-geotype boundary
 
 **step 1: collecting and cleaning spatial crosswalk file for LODES8** (using 2020 census boundary)
