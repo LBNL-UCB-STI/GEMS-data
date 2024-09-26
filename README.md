@@ -1,8 +1,17 @@
 # GEMS Data Generation 
 
-## POC: Xiaodan Xu, Ph.D. (XiaodanXu@lbl.gov)
-## Latest update: 02/27/2024
+**POC: Xiaodan Xu, Ph.D. (XiaodanXu@lbl.gov)**
+**Latest update: 09/25/2024**
 
+**List of Modules**
+* [Geographic boundary](## Theme A: Geographic boundary)
+* [Demographic characteristics](## Theme B: Demograhic characteristics)
+* [Travel demand](Theme C: Collect demand related attributes)
+* [Land use](## Theme D: Collect land use attributes)
+* [Network characteristics](## Theme E: Network generation)
+* [Spatial clustering](Theme F: Spatial clustering)
+* [Accessibility](## Theme G: Accessibility and mode availability)
+* [Cost](## Theme H: Cost)
 
 ## Theme A: Geographic boundary
 ### a1. collecting micro-geotype boundary
@@ -154,12 +163,15 @@ Land_use/CleanData/imputed_NLCD_data_dev_only.csv
 spatial_boundary/CleanData/urban_divisions_2021.csv
 
 ## Theme E: Network generation
-### e1. processing OSMNX data at census tract level
+### E1. processing OSMNX data at census tract level
+
+**step 1: query OSM network metrics **
 
 **code**: [generate_OSMNX_metrics.py](network/generate_OSMNX_metrics.py)
 
 **Input**: queried 2023 OSM metrics from API in R and spatial boundary from step a1 above
 
+**process**:
 * load network statistics from OSMNX
 * if no statistics found, fill in tract-level attributes with NA
 
@@ -261,7 +273,7 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 **output**:
 * Network/CleanData/transit_availability_with_dist_{year}.csv
 
-## Theme H: User cost
+## Theme H: Cost
 
 ### H1. processing transit fare at census tract level
 
@@ -295,9 +307,8 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 * 'Cost/CleanData/parking_tract_{year}.csv'
 * 'Cost/CleanData/uber_fare_tract_{year}.csv'
 
-## Theme  I: System cost
 
-### H1. processing transit system cost at county level
+### H3. processing transit system cost at county level
 
 **code**: [0_clean_transit_costs.R](cost/0_clean_transit_costs.R)
 
@@ -313,7 +324,7 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 * 'Cost/CleanData/transit_system_cost.csv'
 
 
-### H2. processing highway system cost at county level
+### H4. processing highway system cost at county level
 
 **code**: [0_clean_road_network_costs.R](cost/0_clean_road_network_costs.R)
 
