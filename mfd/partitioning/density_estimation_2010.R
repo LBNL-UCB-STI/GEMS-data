@@ -103,7 +103,7 @@ list_csv_files <- function(subdir) {
 }
 
 # List all subfolders within the target density data folder, excluding the target folder itself
-subfolders <- list.dirs(path = cat.proc, recursive = FALSE, full.names = FALSE)[-1]
+subfolders <- list.dirs(path = cat.proc, recursive = FALSE, full.names = FALSE)
 
 all_geoids <- lapply(subfolders, list_csv_files) 
 all_geoids <- unlist(all_geoids)

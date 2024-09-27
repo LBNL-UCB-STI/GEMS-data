@@ -233,6 +233,19 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 * Network/CleanData/network_microtype_metrics.csv (no RRS)
 * Network/CleanData/network_microtype_metrics_2.csv
 
+**Step 3: compute VMT attributes by tract from processed data**
+**code**: [Generate_VMT.ipynb](network/Generate_VMT.ipynb)
+
+**Input**:
+* Network/RawData/{state}_HPMS_with_{year}_GEOID_LANEMILE.geojson
+
+**process**:
+* Compiling processed HPMS data
+* Calculating VMT by vehicle types and by tract
+
+**Output**:
+* Network/CleanData/hpms_vmt_f_system.csv
+
 ## F - Spatial clustering
 ### F1. Develop socio-economic microtype
 
@@ -276,7 +289,7 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 
 ### F2. Develop geotype
 
-**step 1: compile attributes at CBSA/county level**
+**Step 1: compile attributes at CBSA/county level**
 **code**: [geotype_variable_generation.py](spatial_cluster/geotype_variable_generation.py)
 
 **Input**: compile inputs from various themes, including:
@@ -293,7 +306,7 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 **output**:
 * Demand/CleanData/geotype_inputs.csv
 
-**step 2: Develop and validate geotype**
+**Step 2: Develop and validate geotype**
 **code**: [geotype_clustering.R](spatial_cluster/geotype_clustering.R)
 
 **Input**:
@@ -309,6 +322,7 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 * Network/CleanData/Geotype_Rural_Clusters_k2_4_pam.csv
 
 ### F3. Develop network type
+
 **code**: [network_cluster.R](spatial_cluster/network_cluster.R)
 
 **Input**: compile inputs from various themes, including:
@@ -326,6 +340,47 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 * Network/CleanData/network_geotype_non_cbsa_clustered_scaled_data_exEdgeCount_byTracts.csv
 * Network/CleanData/network_geotype_cbsa_clustered_scaled_data_exEdgeCount.csv
 
+### F4. compile all typology results 
+
+**Step 1: compile raw typology results and map to 2010 census boundary** (for mode choice estimation)
+
+**code**: [compile_typology_results_noimp.py](spatial_cluster/compile_typology_results_noimp.py)
+
+**Input**:
+* spatial_boundary/CleanData/cleaned_lodes8_crosswalk_with_ID.csv
+* Demand/Results/clustering_outputs_with_raw_data.csv
+* Network/CleanData/Geotype_Urban_Clusters_k2_4_pam.csv
+* Network/CleanData/Geotype_Rural_Clusters_k2_4_pam.csv
+* Network/CleanData/network_geotype_ALL_clustered_scaled_data_exEdgeCount_byTracts_IntersectionPerStreet.csv
+* spatial_boundary/CleanData/census_tract_crosswalk_2010_2020.csv
+
+**Processes**:
+* Compile typology results from all clustering processes
+* Mapping typology results to 2010 census tract boundary
+
+**Output**:
+* Network/CleanData/microtype_geotype_output_2020_noimp.csv
+* Network/CleanData/microtype_geotype_output_2010_noimp.csv
+
+**Step 2: impute typology for both 2020 and 2010 census boundary** (for other GEMS inputs)
+
+**code**:[impute_typology_results.py](spatial_cluster/impute_typology_results.py)
+
+**Input**:
+* Network/CleanData/microtype_geotype_output_2020_noimp.csv
+* Network/CleanData/microtype_geotype_output_2010_noimp.csv
+* spatial_boundary/CleanData/census_tract_crosswalk_2010_2020.csv
+* spatial_boundary/CleanData/cleaned_lodes8_crosswalk_with_ID.csv
+* spatial_boundary/CleanData/us_xwalk_tract_2017_withID.csv (this is the data from V1 and produced manually)
+* Network/CleanData/ccst_geoid_key_tranps_geo_with_imputation.csv (this is the data from V1 typology)
+
+**Processes**:
+* Impute typology for tracts without values using nearest neighbor
+* Append V1 typology for MFD estimation (MFD data processed using V1 typology)
+
+**Output**:
+* Network/CleanData/microtype_geotype_output_2020.csv
+* Network/CleanData/microtype_geotype_output_2010.csv
 
 ## G - Accessibility and mode availability
 
@@ -361,6 +416,21 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 
 **output**:
 * Network/CleanData/transit_availability_with_dist_{year}.csv
+
+### G3. processing opportunity at census tract level
+**code**: [process_opportunity_data.py](accessibility/process_opportunity_data.py)
+
+**Input**:
+* Opportunity/RawData/*
+* load spatial boundary from Theme A: spatial_boundary/CleanData/combined_tracts_{year}.geojson 
+* Employment data: Demand/CleanData/wac_tract_{year}.csv
+
+**Processes**:
+* Spatial join opportunity data with tract boundary
+* Append job count by industry
+
+**Output**:
+* Opportunity/CleanData/opportunities_and_jobs_parks_{year}.csv
 
 ## H - Cost
 
@@ -413,7 +483,7 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 * 'Cost/CleanData/transit_system_cost.csv'
 
 
-### H4. processing highway system cost at county level
+### H4. processing highway system cost at tract level
 
 **code**: [0_clean_road_network_costs.R](cost/0_clean_road_network_costs.R)
 
@@ -427,4 +497,20 @@ spatial_boundary/CleanData/urban_divisions_2021.csv
 * Calculate weighted highway system cost per tract using lane mile fraction by functional class and cost group at tract level
 
 **output**:
-* 'Cost/CleanData/highway_cost_per_tract.csv'
+* Cost/CleanData/highway_cost_per_tract.csv
+
+
+### H5. processing externality cost at tract level
+
+**code**: [0_clean_external_costs.R](cost/0_clean_external_costs.R)
+
+**Input**: 
+* Cost/RawData/fhwa_external_costs_edited.xlsx
+* Network/CleanData/hpms_vmt_f_system.csv
+
+**Processes**:
+* Compute weighted average externality cost by mode (using VMT by f_class and vehicle type as the weight)
+
+**Output**:
+* Cost/CleanData/external_costs_mode_tract.csv
+
