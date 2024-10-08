@@ -49,7 +49,8 @@ remotes::install_version("spdep", version="1.3-4") #SKATER algorithm is prone to
 p_load(clusterSim) 
 
 
-
+source('functions.R')
+source('spatial.partition_functions.R')
 
 
 #-------------------------------------------------------------------------------
@@ -101,6 +102,7 @@ for(y in 1:length(cbsa_df$cbsaname)){
   words <- unlist(strsplit(city.sel, ", "))
   city = words[1]
   state = words[2]
+  print(city)
   
   city_tracts = df %>%
     #left_join(citymap) %>%
@@ -131,7 +133,7 @@ for(y in 1:length(cbsa_df$cbsaname)){
       ## Create the folder
       dir.create(data_path, recursive = TRUE)  ## recursive=TRUE allows creating nested directories
     } 
-    save(tracts1, file = file.path(paste0(data_path,'/cities/', city,'.partition.results.RData')))
+    save(tracts1, file = file.path(paste0(data_path, '/', city,'.partition.results.RData')))
     next
   }
   
@@ -209,7 +211,7 @@ for(y in 1:length(cbsa_df$cbsaname)){
           (y == 618 && idx %in% c("15-02", "15-04", "bad clusters"))) {
         next # Skip the bad clusters
       }
-      print(idx)
+      #print(idx)
       split2_partition(idx) ## Split the partiion into 2 using skater
     }
     
@@ -238,7 +240,7 @@ for(y in 1:length(cbsa_df$cbsaname)){
     dir.create(data_path, recursive = TRUE)  ## recursive=TRUE allows creating nested directories
   }  
   
-  save(tracts1, file = file.path(paste0(data_path,'/cities/', city,'.partition.results.RData')))
+  save(tracts1, file = file.path(paste0(data_path,'/', city,'.partition.results.RData')))
   
 }
 
@@ -385,7 +387,7 @@ for(file in rdata_files){
 write.csv(df_results, file.path(rdatdir, "final_merginging_orphans_results.csv"), row.names = FALSE)
 
 final_results <- final_results[-1,]
-write.csv(final_results, file.path(rdatdir,"final_partition_results.csv"), row.names = FALSE)
+write.csv(final_results, file.path(rdatdir,"final_partition_results_100324.csv"), row.names = FALSE)
 
 
 #-------------------------------------------------------------------------------
