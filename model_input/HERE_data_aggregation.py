@@ -22,7 +22,7 @@ label_2010 = read_csv(typology_file)
 microtype_3_dir = 'National/proc_data/m3_tracts_frc1_5'
 microtype_other_dir = 'National/proc_data/all_tracts_frc3_5'
 
-data_aggregation_done = 1 # 1- yes, 0 - no
+data_aggregation_done = 0 # 1- yes, 0 - no
 
 microtype_3_files = [filename for filename in os.listdir(microtype_3_dir) \
                      if filename.endswith("upperbounds.csv")]
@@ -31,6 +31,7 @@ microtype_other_files = [filename for filename in os.listdir(microtype_other_dir
     
 label_2010_short = label_2010[['GEOID', 'geotype', 'network_microtype']]
 # <codecell>    
+meter_per_mile = 1609.34
 def speed_data_processor(df):
 
     df.loc[:, 'formatted_time'] = \
@@ -38,6 +39,8 @@ def speed_data_processor(df):
     df.loc[:, 'weekday'] = df.loc[:, 'formatted_time'].dt.weekday
     df.loc[:, 'hour'] = df.loc[:, 'formatted_time'].dt.hour
     df_out = df.loc[df['weekday'] <= 4]
+    thres_density = 100 / meter_per_mile
+    df_out = df_out.loc[df_out['agg_density_plpm'] >= thres_density]
     df_out.dropna(inplace = True)
     return(df_out)
 
@@ -66,9 +69,12 @@ if data_aggregation_done == 0:
     microtype_other_files_sel = ['bytract_upperbounds_state_AL.csv',
                                  'bytract_upperbounds_state_CA.csv',
                                  'bytract_upperbounds_state_CO.csv',
+                                 'bytract_upperbounds_state_CT.csv',
                                  'bytract_upperbounds_state_FL.csv',
                                  'bytract_upperbounds_state_ID.csv',
-                                 'bytract_upperbounds_state_MD.csv']
+                                 'bytract_upperbounds_state_MD.csv',
+                                 'bytract_upperbounds_state_KY.csv',
+                                 'bytract_upperbounds_state_SD.csv']
     HERE_data_microtype_other = \
         pd.concat((pd.read_csv(os.path.join(microtype_other_dir, f)) 
                    for f in microtype_other_files_sel), ignore_index=True)
@@ -85,7 +91,6 @@ if data_aggregation_done == 0:
         HERE_data_microtype_other.loc[HERE_data_microtype_other['network_microtype'] != 'Urban_2']
     HERE_data_microtype_other = speed_data_processor(HERE_data_microtype_other)
     
-    # <codecell>
     HERE_data_by_typology = pd.concat([HERE_data_microtype_3, 
                                        HERE_data_microtype_other])
     HERE_data_by_typology.to_csv('Validation/cleaned_HERE_data.csv',
